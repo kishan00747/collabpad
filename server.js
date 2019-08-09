@@ -9,6 +9,9 @@ const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'),
 
 
 const app = express();
+const expressWs = require('express-ws') (app);
+
+
 
 
 app.use(bodyParser.json());
@@ -41,6 +44,16 @@ app.post('/', asyncMiddleware( async (req, res, next) => {
 
 }));
 
+
+
+
+app.ws('/', (ws, req) => {
+    
+    ws.on('message', (msg) => {
+        const text = JSON.parse(msg);
+        console.log(msg);
+    })   
+});
 
 const setDataInRedis = (key, value) => {
 

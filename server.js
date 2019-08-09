@@ -1,51 +1,66 @@
 const express = require('express');
-const redis = require('redis');
+const redisClient = require('./redis.config');
+const fs = require('fs');
+const path = require('path');
 const bodyParser = require('body-parser');
+const asyncMiddleware = require('./utils').asyncMiddleware;
+const morgan = require('morgan');
+const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {flags: 'a'});
 
 
 const app = express();
-const redisClient = redis.createClient();
+
 
 app.use(bodyParser.json());
+app.use(morgan('combined', {stream: accessLogStream}));
 
-app.get('/:key', (req, res) => {
 
-    const key = req.params.key
+app.get('/:key', asyncMiddleware( async (req, res, next) => {
 
-    redisClient.get(key, (err, reply) => {
+    const key = req.params.key;
+    const msg = await getDataFromRedis(key);
 
-        if(reply === null)
-        {    
-            res.status(404).send();
-        }
-        else
-        {
-            const msg = {
-                value: reply
-            }
+    if(msg.value === null)
+    {    
+        res.status(404).send();
+    }
+    else
+    {
+        res.status(200).json(msg);
+    }
     
-            res.status(200).json(msg);
-        }
-        
-    })
-});
+}));
 
 
-app.post('/', (req, res) => {
+app.post('/', asyncMiddleware( async (req, res, next) => {
 
     const key = req.body.key;
     const value = req.body.value;
 
-    redisClient.set(key, value, (err, rep) => {
-        const msg = {
-            reply: rep
-        }
-        res.status(200).json(msg);
-    })
+    res.status(200).json(await setDataInRedis(key, value))
 
-})
+}));
 
 
+const setDataInRedis = (key, value) => {
+
+    return redisClient.setAsync(key, value)
+        .then((rep) => {
+            const msg = {reply: rep}
+            return msg;
+        })
+}
+
+const getDataFromRedis = (key) => {
+
+    return redisClient.getAsync(key)
+        .then( (reply) => {
+            const msg = {value: reply}
+            return msg;
+            }
+        )
+
+}
 
 
 

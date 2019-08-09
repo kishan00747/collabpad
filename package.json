@@ -18,7 +18,8 @@
   },
   "homepage": "https://github.com/kishan00747/collabpad#readme",
   "dependencies": {
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "express-ws": "^4.0.0"
   },
   "devDependencies": {
     "nodemon": "^1.19.1"

@@ -1,80 +1,82 @@
 const express = require('express');
-const redisClient = require('./redis.config');
+const redis = require('./redis.config');
 const fs = require('fs');
+const cors = require('cors');
 const path = require('path');
 const bodyParser = require('body-parser');
 const asyncMiddleware = require('./utils').asyncMiddleware;
+const uniqid = require('uniqid');
 const morgan = require('morgan');
 const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {flags: 'a'});
 
 
 const app = express();
-const expressWs = require('express-ws') (app);
+const expressWs = require('express-ws')(app);
+const KEY = "3452857";
 
 
-
-
+app.use(cors());
 app.use(bodyParser.json());
 app.use(morgan('combined', {stream: accessLogStream}));
 
 
-app.get('/:key', asyncMiddleware( async (req, res, next) => {
+app.ws('/', (ws, req) => {
+
+    ws.on('message', (msg) => {
+        const response = JSON.parse(msg);
+        console.log(response);
+        redis.setDataInRedis(response.id, response.text);
+    })
+    
+});
+
+app.get('/', asyncMiddleware( async (req, res, next) => {
+
+    const unid = await uniqid();
+    console.log("here")
+    await redis.setDataInRedis(unid, "");
+
+    res.redirect("/" + unid);
+     
+}));
+
+
+app.use(express.static(path.join(__dirname + "/frontend/")));
+
+
+app.get('/:id', (req, res, next) => {  
+
+    res.sendFile(path.join(__dirname + "/frontend/index.html"));
+});
+
+app.get('/notes/:key', asyncMiddleware( async (req, res, next) => {
 
     const key = req.params.key;
-    const msg = await getDataFromRedis(key);
+    const msg = await redis.getDataFromRedis(key);
 
     if(msg.value === null)
     {    
-        res.status(404).send();
+        res.status(404).send("Failed");
     }
     else
     {
+        // console.log("sending", msg);
         res.status(200).json(msg);
     }
     
 }));
 
 
-app.post('/', asyncMiddleware( async (req, res, next) => {
+
+
+app.post('/:id', asyncMiddleware( async (req, res, next) => {
 
     const key = req.body.key;
     const value = req.body.value;
 
-    res.status(200).json(await setDataInRedis(key, value))
+    res.status(200).json(await redis.setDataInRedis(key, value))
 
 }));
-
-
-
-
-app.ws('/', (ws, req) => {
-    
-    ws.on('message', (msg) => {
-        const text = JSON.parse(msg);
-        console.log(msg);
-    })   
-});
-
-const setDataInRedis = (key, value) => {
-
-    return redisClient.setAsync(key, value)
-        .then((rep) => {
-            const msg = {reply: rep}
-            return msg;
-        })
-}
-
-const getDataFromRedis = (key) => {
-
-    return redisClient.getAsync(key)
-        .then( (reply) => {
-            const msg = {value: reply}
-            return msg;
-            }
-        )
-
-}
-
 
 
 

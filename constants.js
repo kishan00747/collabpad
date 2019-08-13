@@ -1,6 +1,6 @@
 const redisServer = {
-    host: "127.0.0.1",
-    port: 6379
+    host: process.env.redisHost || "127.0.0.1",
+    port: process.env.redisPort || 6379
 }
 
 

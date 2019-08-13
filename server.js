@@ -12,7 +12,6 @@ const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'),
 
 const app = express();
 const expressWs = require('express-ws')(app);
-const KEY = "3452857";
 
 
 app.use(cors());
@@ -20,11 +19,11 @@ app.use(bodyParser.json());
 app.use(morgan('combined', {stream: accessLogStream}));
 
 
+
 app.ws('/', (ws, req) => {
 
     ws.on('message', (msg) => {
         const response = JSON.parse(msg);
-        console.log(response);
         redis.setDataInRedis(response.id, response.text);
     })
     
@@ -33,7 +32,6 @@ app.ws('/', (ws, req) => {
 app.get('/', asyncMiddleware( async (req, res, next) => {
 
     const unid = await uniqid();
-    console.log("here")
     await redis.setDataInRedis(unid, "");
 
     res.redirect("/" + unid);
@@ -45,7 +43,6 @@ app.use(express.static(path.join(__dirname + "/frontend/")));
 
 
 app.get('/:id', (req, res, next) => {  
-
     res.sendFile(path.join(__dirname + "/frontend/index.html"));
 });
 
@@ -60,11 +57,12 @@ app.get('/notes/:key', asyncMiddleware( async (req, res, next) => {
     }
     else
     {
-        // console.log("sending", msg);
         res.status(200).json(msg);
     }
     
 }));
+
+
 
 
 

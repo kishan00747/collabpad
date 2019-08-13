@@ -18,13 +18,31 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(morgan('combined', {stream: accessLogStream}));
 
+let clients = {};
 
+app.ws('/:id', (ws, req) => {
 
-app.ws('/', (ws, req) => {
+    const id = req.params.id;
+
+    if (!clients[id]) {
+        clients[id] = [ws];
+    } else {
+        clients[id].push(ws);
+    }
+
+    // console.log(clients);
 
     ws.on('message', (msg) => {
         const response = JSON.parse(msg);
         redis.setDataInRedis(response.id, response.text);
+
+        const broadcastList = clients[response.id];
+        // console.log(broadcastList)
+        const broadcastMsg = {text: response.text}
+        broadcastList.forEach(ws => {
+            ws.send(JSON.stringify(broadcastMsg));
+        })
+        
     })
     
 });

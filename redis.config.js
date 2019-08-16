@@ -14,6 +14,7 @@ const redisClient = Redis.createClient(
 
 redisClient
     .on('connect', () =>{
+        console.log(redisClient);
         console.log('Redis connected');
     });
 

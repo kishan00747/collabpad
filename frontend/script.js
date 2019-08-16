@@ -1,23 +1,10 @@
 var id = window.location.href.split("/").pop();
-
-var ws = new WebSocket('ws://localhost:3002/'+id);
 var textbox = document.getElementById("textbox");
 var dmp = new diff_match_patch();
-
+var ws;
 var text = "";
 
-fetch('http://localhost:3002/notes/' + id)
-    .then(response => response.json())
-    .then(data => {
-        text = data.value;
-        textbox.value = text;
-    });
-
-//TO DO
-// There are untracked changes after the patch is applied, which are hidden by the text = textbox.value; line 
-// Make sure to work out a solution to that problem.
-
-ws.onmessage = (ev) => {
+function wsOnMessage(ev) {
     const data = JSON.parse(ev.data);
     const oldLength = textbox.value.length;
     const patch = dmp.patch_make(textbox.value, data.diffs);
@@ -46,9 +33,42 @@ ws.onmessage = (ev) => {
     }
 }
 
-setInterval( function() {
+function fetchNote() {
+    
+    fetch('http://localhost:3002/notes/' + id)
+    .then(response => response.json())
+    .then(data => {
+        text = data.value;
+        textbox.value = text;
+    })
+    .catch(err => {
+        
+    });
 
-    if(text != textbox.value)
+}
+
+function initWS() {
+ws = new WebSocket('ws://localhost:3002/'+id);
+
+ws.onmessage = wsOnMessage;
+
+}
+
+
+
+initWS();
+fetchNote();
+
+
+//TO DO
+// There are untracked changes after the patch is applied, which are hidden by the text = textbox.value; line 
+// Make sure to work out a solution to that problem.
+
+
+
+setInterval( function() {
+    
+    if(ws.readyState === ws.OPEN && text != textbox.value)
     {
         console.log(ws.readyState);
         text = textbox.value;
@@ -60,4 +80,11 @@ setInterval( function() {
     }
 
 }, 1000);
+
+setInterval( function() {
+    if(ws.readyState !== ws.OPEN)
+    {
+        initWS();
+    }
+}, 3000)
 

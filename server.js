@@ -78,8 +78,8 @@ app.ws('/:id', (ws, req) => {
         redis.setDataInRedis(response.id, response.text);
     
         const broadcastList = clients[response.id];
-        // console.log(broadcastList)
         const broadcastMsg = {diffs}
+        
         broadcastList.forEach( (wsc, i) => {
 
             if( !(wsc === ws) )

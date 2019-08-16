@@ -46,7 +46,16 @@ header h3{
     padding: 10px;
     margin: 0 auto;
     outline: none;
-    -moz-box-shadow:    0 0 10px #000000;
-    -webkit-box-shadow: 0 0 10px #000000;
-    box-shadow:         0 0 10px #000000;
+    -moz-box-shadow:    0 0 5px #000000;
+    -webkit-box-shadow: 0 0 5px #000000;
+    box-shadow:         0 0 5px #000000;
+    transition: 0.5s;
+    
+}
+
+#textbox:focus {
+    border-color: cornflowerblue;
+    -moz-box-shadow:    5px 5px 10px #333;
+    -webkit-box-shadow: 5px 5px 10px #333;
+    box-shadow:         5px 5px 10px #333;
 }

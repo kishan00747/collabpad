@@ -6,15 +6,12 @@ const HNOTES = "notes";
 Promise.promisifyAll(Redis.RedisClient.prototype);
 Promise.promisifyAll(Redis.Multi.prototype);
 
-console.log(redisServer); 
-
 const redisClient = Redis.createClient(
     redisServer
 );
 
 redisClient
     .on('connect', () =>{
-        console.log(redisClient);
         console.log('Redis connected');
     });
 

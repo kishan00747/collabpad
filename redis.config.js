@@ -1,7 +1,7 @@
 const Redis = require('redis');
 const redisServer = require('constants').redisServer;
 global.Promise = require('bluebird');
-const setNotes = "notes";
+const HNOTES = "notes";
 
 Promise.promisifyAll(Redis.RedisClient.prototype);
 Promise.promisifyAll(Redis.Multi.prototype);
@@ -18,7 +18,7 @@ redisClient
 
 const setDataInRedis = (key, value) => {
 
-    return redisClient.hsetAsync(setNotes, key, value)
+    return redisClient.hsetAsync(HNOTES, key, value)
         .then((rep) => {
             const msg = {reply: rep}
             return msg;
@@ -29,7 +29,7 @@ const getDataFromRedis = (key) => {
 
     const msg = {value: null};
 
-    return redisClient.hgetAsync(setNotes, key)
+    return redisClient.hgetAsync(HNOTES, key)
         .then( (reply) => {
             const msg = {value: reply}
             return msg;

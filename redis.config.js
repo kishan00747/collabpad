@@ -1,10 +1,12 @@
 const Redis = require('redis');
-const redisServer = require('constants').redisServer;
+const redisServer = require('./constants').redisServer;
 global.Promise = require('bluebird');
 const HNOTES = "notes";
 
 Promise.promisifyAll(Redis.RedisClient.prototype);
 Promise.promisifyAll(Redis.Multi.prototype);
+
+console.log(redisServer); 
 
 const redisClient = Redis.createClient(
     redisServer

@@ -45,6 +45,7 @@ header h3{
     border-radius: 8px;
     padding: 10px;
     margin: 0 auto;
+    outline: none;
     -moz-box-shadow:    0 0 10px #000000;
     -webkit-box-shadow: 0 0 10px #000000;
     box-shadow:         0 0 10px #000000;

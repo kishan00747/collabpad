@@ -80,7 +80,7 @@ app.ws('/:id', (ws, req) => {
         const broadcastList = clients[response.id];
         // console.log(broadcastList)
         const broadcastMsg = {diffs}
-        broadcastList.forEach(wsc => {
+        broadcastList.forEach( (wsc, i) => {
 
             if( !(wsc === ws) )
             {
@@ -90,7 +90,7 @@ app.ws('/:id', (ws, req) => {
                 }
                 catch(err)
                 {
-                    console.log("Socket Closed, Couldn't send!");
+                    broadcastList.splice(i, 1);
                 }
             }
             

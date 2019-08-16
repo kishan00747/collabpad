@@ -1,12 +1,12 @@
 var id = window.location.href.split("/").pop();
 
-var ws = new WebSocket('ws://collabpadx.herokuapp.com/'+id);
+var ws = new WebSocket('ws://localhost:3002/'+id);
 var textbox = document.getElementById("textbox");
 var dmp = new diff_match_patch();
 
 var text = "";
 
-fetch('https://collabpadx.herokuapp.com/notes/' + id)
+fetch('http://localhost:3002/notes/' + id)
     .then(response => response.json())
     .then(data => {
         text = data.value;

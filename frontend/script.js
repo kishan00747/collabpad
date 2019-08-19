@@ -1,20 +1,53 @@
 var id = window.location.href.split("/").pop();
 var textbox = document.getElementById("textbox");
 var dmp = new diff_match_patch();
-var ws;
-var text = "";
+var ws = null;
+var sentText = "";
+var timeout = null;
+var patchList = [];
+
+
+function wsConnect() {
+    ws = new WebSocket('ws://172.16.172.137:3002/' + id);
+
+    ws.onopen = function() {
+        console.log('Socket opened');
+    };
+
+    ws.onmessage = wsOnMessage;
+
+    ws.onclose = function(ev) {
+        console.log("Socket is closed. Retrying in 3 secs...", ev.reason);
+        setTimeout(function(){
+            wsConnect();
+        }, 3000)
+    };
+
+    ws.onerror = function(err) {
+        console.error('Socket encountered an error: ', err.message, 'Closing Socket...');
+        ws.close();
+    }
+
+}
+
 
 function wsOnMessage(ev) {
+
     const data = JSON.parse(ev.data);
     const oldLength = textbox.value.length;
-    const patch = dmp.patch_make(textbox.value, data.diffs);
-    console.log(patch);
-    const result = dmp.patch_apply(dmp.patch_make(textbox.value, data.diffs), textbox.value);
+    patchTextbox(data.diffs);
+    sendChanges();
+}
+
+function patchTextbox(diffs) {
+    const patch = dmp.patch_make(textbox.value, diffs);
+    // console.log(patch);
+    const result = dmp.patch_apply(dmp.patch_make(textbox.value, diffs), textbox.value);
     let offset;
     const caretPosition = textbox.selectionStart;
-    text = result[0];
+    // sentText = result[0];
     textbox.value = result[0];
-    console.log(result[1]);
+    // console.log(result[1]);
 
     if(patch)
     { 
@@ -31,60 +64,78 @@ function wsOnMessage(ev) {
         textbox.selectionStart = caretPosition + offset;
         textbox.selectionEnd = caretPosition + offset;
     }
+
+    // console.log(result[0]);
 }
 
 function fetchNote() {
     
-    fetch('http://localhost:3002/notes/' + id)
+    return fetch('http://172.16.172.137:3002/notes/' + id)
     .then(response => response.json())
     .then(data => {
-        text = data.value;
-        textbox.value = text;
+        return data.value;
     })
     .catch(err => {
-        
+        // console.log("Note fetch failed!");
+        return null;
     });
 
 }
 
-function initWS() {
-ws = new WebSocket('ws://localhost:3002/'+id);
+async function setNote() {
+    var value = await fetchNote();
+    if(value !== null)
+    {
+        sentText = value;
+        textbox.value = value;
+    }
+}  
 
-ws.onmessage = wsOnMessage;
 
+
+function serverNotePatch(serverNote)
+{
+    const localNote = textbox.value;
+    var diffs = dmp.diff_main(localNote, serverNote);
+    patchTextbox(diffs);
 }
 
 
 
-initWS();
-fetchNote();
-
-
-//TO DO
-// There are untracked changes after the patch is applied, which are hidden by the text = textbox.value; line 
-// Make sure to work out a solution to that problem.
 
 
 
-setInterval( function() {
+textbox.onkeyup = function() {
+
+
+    if(timeout === null)
+    {
+        timeout = setTimeout(sendChanges, 500);
+    }
+    else
+    {
+        clearTimeout(timeout);
+        timeout = setTimeout(sendChanges, 500); 
+    }
+};
+
+
+function sendChanges() {
     
-    if(ws.readyState === ws.OPEN && text != textbox.value)
+    if(ws.readyState === ws.OPEN && sentText != textbox.value)
     {
         console.log(ws.readyState);
-        text = textbox.value;
+        sentText = textbox.value;
+        var text = sentText;
         if(ws.readyState === ws.OPEN)
         {
             var msg = {id, text}
             ws.send(JSON.stringify(msg));
-        }   
+        }
     }
 
-}, 1000);
+};
 
-setInterval( function() {
-    if(ws.readyState !== ws.OPEN)
-    {
-        initWS();
-    }
-}, 3000)
 
+wsConnect();
+setNote();

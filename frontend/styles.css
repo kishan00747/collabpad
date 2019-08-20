@@ -1,6 +1,6 @@
 body {
     background: rgb(28,72,50);
-    background: linear-gradient(0deg, rgba(28,72,50,1) 0%, rgba(9,111,121,1) 58%, rgba(0,212,255,1) 100%);
+    background: linear-gradient(270deg, rgba(28,72,50,1) 0%, rgba(9,111,121,1) 35%, rgba(0,212,255,1) 100%);
     padding: 0px;
     margin:0px;
     font-size: 15px;

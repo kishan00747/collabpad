@@ -15,7 +15,7 @@ window.onload = function()
         ws = new WebSocket('ws://172.16.172.137:3002/' + id);
 
         ws.onopen = function() {
-            console.log(textbox.value);
+            // console.log(textbox.value);
             fetchAndPatch();
             console.log('Socket opened');
         };
@@ -47,8 +47,6 @@ window.onload = function()
 
     function patchTextbox(diffs) {
         const patch = dmp.patch_make(textbox.value, diffs);
-        console.log(textbox.value);
-        console.log(patch);
         const result = dmp.patch_apply(patch, textbox.value);
         let offset;
         const caretPosition = textbox.selectionStart;

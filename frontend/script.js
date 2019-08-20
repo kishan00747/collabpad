@@ -42,7 +42,7 @@ window.onload = function()
         const data = JSON.parse(ev.data);
         const oldLength = textbox.value.length;
         patchTextbox(data.diffs);
-        sendChanges();
+        // sendChanges();
     }
 
     function patchTextbox(diffs) {

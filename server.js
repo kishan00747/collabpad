@@ -37,12 +37,12 @@ app.ws('/:id', (ws, req) => {
         const response = JSON.parse(msg);
         
         const note = await redis.getDataFromRedis(response.id);
-        const diffs = dmp.diff_main(note.value, response.text);
+        const patches = dmp.patch_make(note.value, response.text);
         
         redis.setDataInRedis(response.id, response.text);
     
         const broadcastList = clients[response.id];
-        const broadcastMsg = {diffs}
+        const broadcastMsg = {patches}
         
         broadcastList.forEach( (wsc, i) => {
 

@@ -41,7 +41,7 @@ window.onload = function()
 
         const data = JSON.parse(ev.data);
         const oldLength = textbox.value.length;
-        patchTextbox(data.diffs);
+        patchTextboxFromPatches(data.patches);
         // sendChanges();
     }
 
@@ -127,17 +127,11 @@ window.onload = function()
     }  
 
 
-
     function serverNotePatch(serverNote)
     {
         var patches = dmp.patch_make(lastUpdatedCopy, serverNote);
         patchTextboxFromPatches(patches);
     }
-
-
-
-
-
 
 
     textbox.onkeyup = function() {

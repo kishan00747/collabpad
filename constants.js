@@ -1,6 +1,11 @@
 const redisServer = {
-    host: process.env.redisHost || '127.0.0.1',
-    port: process.env.redisPort || 6379
+    host: process.env.REDISCACHEHOSTNAME || '127.0.0.1',
+    port: process.env.REDISPORT || 6379,
+    options: {
+        auth_pass:process.env.REDISCACHEKEY,
+        tls: {servername: process.env.REDISCACHEHOSTNAME}
+    }
+
 }
 
 

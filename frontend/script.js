@@ -1,6 +1,7 @@
 window.onload = function() 
 {
     var id = window.location.href.split("/").pop();
+    var host = window.location.host;
     var textbox = document.getElementById("textbox");
     var dmp = new diff_match_patch();
     textbox.value = '';
@@ -8,11 +9,10 @@ window.onload = function()
     var sentText = "";
     var timeout = null;
     var lastUpdatedCopy = "";
-    var patchList = [];
 
 
     function wsConnect() {
-        ws = new WebSocket('ws://172.16.172.137:3002/' + id);
+        ws = new WebSocket('ws://' + host + '/' + id);
 
         ws.onopen = function() {
             // console.log(textbox.value);
@@ -45,26 +45,17 @@ window.onload = function()
         // sendChanges();
     }
 
-    function patchTextbox(diffs) {
-        const patch = dmp.patch_make(textbox.value, diffs);
-        const result = dmp.patch_apply(patch, textbox.value);
+    function patchTextboxFromPatches(patches) {
+        const result = dmp.patch_apply(patches, textbox.value);
         let offset;
         const caretPosition = textbox.selectionStart;
         lastUpdatedCopy = result[0];
         textbox.value = result[0];
         // console.log(result[1]);
 
-        if(patch && (patch.length !== 0) )
+        if(patches && (patches.length !== 0) )
         { 
-            const checkDiff = (patch[0].diffs[0][0] === 0) ? patch[0].diffs[0][1].length : 0;
-            if(caretPosition <= (patch[0].start1 + checkDiff) )
-            {
-                offset = 0;   
-            }
-            else
-            {
-                offset = (patch[0].length2 - patch[0].length1);
-            }
+            offset = getCaretOffset(patches, caretPosition);
 
             textbox.selectionStart = caretPosition + offset;
             textbox.selectionEnd = caretPosition + offset;
@@ -73,36 +64,22 @@ window.onload = function()
         // console.log(result[0]);
     }
 
-    function patchTextboxFromPatches(patch) {
-        const result = dmp.patch_apply(patch, textbox.value);
-        let offset;
-        const caretPosition = textbox.selectionStart;
-        lastUpdatedCopy = result[0];
-        textbox.value = result[0];
-        // console.log(result[1]);
-
-        if(patch && (patch.length !== 0) )
-        { 
-            const checkDiff = (patch[0].diffs[0][0] === 0) ? patch[0].diffs[0][1].length : 0;
-            if(caretPosition <= (patch[0].start1 + checkDiff) )
-            {
-                offset = 0;   
-            }
-            else
-            {
-                offset = (patch[0].length2 - patch[0].length1);
-            }
-
-            textbox.selectionStart = caretPosition + offset;
-            textbox.selectionEnd = caretPosition + offset;
+    function getCaretOffset(patches, caretPosition)
+    {
+        const checkDiff = (patches[0].diffs[0][0] === 0) ? patches[0].diffs[0][1].length : 0;
+        if(caretPosition <= (patches[0].start1 + checkDiff) )
+        {
+            return 0;   
         }
-
-        // console.log(result[0]);
+        else
+        {
+            return (patches[0].length2 - patches[0].length1);
+        }
     }
 
     function fetchNote() {
         
-        return fetch('http://172.16.172.137:3002/notes/' + id)
+        return fetch('http://' + host + '/notes/' + id)
         .then(response => response.json())
         .then(data => {
             return data.value;

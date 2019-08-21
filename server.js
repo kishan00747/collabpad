@@ -106,21 +106,6 @@ app.get('/notes/:key', asyncMiddleware( async (req, res, next) => {
 }));
 
 
-
-
-
-
-app.post('/:id', asyncMiddleware( async (req, res, next) => {
-
-    const key = req.body.key;
-    const value = req.body.value;
-
-    res.status(200).json(await redis.setDataInRedis(key, value))
-
-}));
-
-
-
 app.listen(port, () => {
     console.log("Server Running");
 })

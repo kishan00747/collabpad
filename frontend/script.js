@@ -79,7 +79,7 @@ window.onload = function()
 
     function fetchNote() {
         
-        return fetch('http://' + host + '/notes/' + id)
+        return fetch('https://' + host + '/notes/' + id)
         .then(response => response.json())
         .then(data => {
             return data.value;

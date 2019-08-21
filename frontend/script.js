@@ -12,7 +12,7 @@ window.onload = function()
 
 
     function wsConnect() {
-        ws = new WebSocket('ws://' + host + '/' + id);
+        ws = new WebSocket('wss://' + host + '/' + id);
 
         ws.onopen = function() {
             // console.log(textbox.value);

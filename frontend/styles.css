@@ -43,7 +43,8 @@ header h3{
     display: flex;
     justify-content: center;
     margin: 20px auto;
-    min-height: calc(100vh - 25%);
+    height: 70%;
+    min-height: calc(100% - 25%);
     
 }
 

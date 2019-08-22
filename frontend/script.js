@@ -21,13 +21,6 @@ window.onload = function()
             // console.log(textbox.value);
             fetchAndPatch();
             console.log('Socket opened');
-            if(!isNoteLoaded)
-            {
-                isNoteLoaded = true;
-                textbox.disabled = false;
-                textbox.placeholder = "Write Here...";
-            }
-
         };
 
         ws.onmessage = wsOnMessage;
@@ -107,9 +100,20 @@ window.onload = function()
         {
             // sentText = value;
             serverNotePatch(value);
+            noteLoadChecker();
+
         }
         sendChanges();
     }  
+
+    function noteLoadChecker(){
+        if(!isNoteLoaded)
+            {
+                isNoteLoaded = true;
+                textbox.disabled = false;
+                textbox.placeholder = "Write Here...";
+            }
+    }
 
 
     function serverNotePatch(serverNote)

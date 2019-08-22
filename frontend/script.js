@@ -4,11 +4,14 @@ window.onload = function()
     var host = window.location.host;
     var textbox = document.getElementById("textbox");
     var dmp = new diff_match_patch();
+    textbox.disabled = true;
+    textbox.placeholder = "Note is loading, Please wait...";
     textbox.value = '';
     var ws = null;
     var sentText = "";
     var timeout = null;
     var lastUpdatedCopy = "";
+    var isNoteLoaded = false;
 
 
     function wsConnect() {
@@ -18,6 +21,13 @@ window.onload = function()
             // console.log(textbox.value);
             fetchAndPatch();
             console.log('Socket opened');
+            if(!isNoteLoaded)
+            {
+                isNoteLoaded = true;
+                textbox.disabled = false;
+                textbox.placeholder = "Write Here...";
+            }
+
         };
 
         ws.onmessage = wsOnMessage;

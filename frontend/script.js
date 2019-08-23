@@ -49,12 +49,12 @@ window.onload = function()
     }
 
     function patchTextboxFromPatches(patches) {
+        console.log(patches);
         const result = dmp.patch_apply(patches, textbox.value);
         let offset;
         const caretPosition = textbox.selectionStart;
         lastUpdatedCopy = result[0];
         textbox.value = result[0];
-        // console.log(result[1]);
 
         if(patches && (patches.length !== 0) )
         { 
@@ -64,7 +64,6 @@ window.onload = function()
             textbox.selectionEnd = caretPosition + offset;
         }
 
-        // console.log(result[0]);
     }
 
     function getCaretOffset(patches, caretPosition)

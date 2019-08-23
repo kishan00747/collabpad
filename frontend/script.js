@@ -45,7 +45,7 @@ window.onload = function()
         const data = JSON.parse(ev.data);
         const oldLength = textbox.value.length;
         patchTextboxFromPatches(data.patches);
-        // sendChanges();
+        sendChanges();
     }
 
     function patchTextboxFromPatches(patches) {
@@ -145,11 +145,9 @@ window.onload = function()
             console.log(ws.readyState);
             sentText = textbox.value;
             var text = sentText;
-            if(ws.readyState === ws.OPEN)
-            {
-                var msg = {id, text}
-                ws.send(JSON.stringify(msg));
-            }
+            var msg = {id, text}
+            ws.send(JSON.stringify(msg));
+            
         }
 
     };

@@ -2,24 +2,100 @@ window.onload = function()
 {
     var id = window.location.href.split("/").pop();
     var host = window.location.host;
+    
     var textbox = document.getElementById("textbox");
+    var inputPass = document.getElementById("input_pass");
+    var btnPass = document.getElementById("btn_pass");
+    var modalMessage = document.getElementById("modal_message");
+    var modalPass = document.getElementById("modal_pass");
+    var btnSubmitPass = document.getElementById("btn_submit_pass");
+    var modalBtnCancel = document.getElementById("btn_cancel_pass");
+
     var dmp = new diff_match_patch();
     textbox.disabled = true;
     textbox.placeholder = "Note is loading, Please wait...";
     textbox.value = '';
     var ws = null;
-    var sentText = "";
+    var deliveredText = "";
     var timeout = null;
     var lastUpdatedCopy = "";
     var isNoteLoaded = false;
+    var sentTextList = {};
+    var seqNo = 0;
+
+    btnPass.onclick = onBtnPassClick;
+    modalBtnCancel.onclick = onModalBtnCancelClick;
+    btnSubmitPass.onclick = onBtnSubmitPassClick;
+
+    window.onclick = function(ev){
+        if(ev.target === modalPass)
+        {
+            modalPass.style.display = "none";
+        }
+    }
+
+    function onModalBtnCancelClick(ev){
+        modalPass.style.display = "none";
+    }
+
+    function onBtnSubmitPassClick(ev){
+
+
+        if(inputPass.value.length < 4 || inputPass.value.length > 20)
+        {
+            modalMessage.innerText = "Password must be 4-20 characters long.";
+            modalMessage.style.display = "block";
+            modalMessage.classList.add('text-error');
+            modalMessage.classList.remove('text-success');
+            return;
+        }
+        else
+        {
+            modalMessage.style.display = "none";
+        }
+
+        var data = {
+            id,
+            password: inputPass.value
+        }
+        
+        fetch('http://' + host + '/notes/password/', {
+            method: 'POST',
+            body: JSON.stringify(data), 
+            headers:{
+              'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.reply !== -1)
+            {
+                modalMessage.innerText = "Password Changed successfully!";
+                modalMessage.style.display = "block";
+                modalMessage.classList.remove('text-error');
+                modalMessage.classList.add('text-success');
+            }
+            else
+            {
+                modalMessage.innerText = "Error occured while updating password!";
+                modalMessage.style.display = "block";
+                modalMessage.classList.add('text-error');
+                modalMessage.classList.remove('text-success');
+            }
+        })
+    }
+
+    function onBtnPassClick(ev){
+        modalPass.style.display = "block";
+    }
 
 
     function wsConnect() {
-        ws = new WebSocket('wss://' + host + '/' + id);
+        ws = new WebSocket('ws://' + host + '/' + id);
 
         ws.onopen = function() {
             // console.log(textbox.value);
-            fetchAndPatch();
+            fetchAndPatch(); 
             console.log('Socket opened');
         };
 
@@ -30,22 +106,38 @@ window.onload = function()
             setTimeout(function(){
                 wsConnect();
             }, 3000)
+
+            console.log("onclose", ws.readyState);
         };
 
         ws.onerror = function(err) {
-            console.error('Socket encountered an error: ', err.message, 'Closing Socket...');
+            console.error('Socket encountered an error: ', err, 'Closing Socket...');
             ws.close();
+            console.log("onerror", ws.readyState);
         }
 
     }
 
 
-    function wsOnMessage(ev) {
-
+    function wsOnMessage(ev) { 
+            
         const data = JSON.parse(ev.data);
-        const oldLength = textbox.value.length;
-        patchTextboxFromPatches(data.patches);
-        //sendChanges();
+        if(data.seq !== undefined)
+        {
+            var seq = data.seq;
+            deliveredText = sentTextList[seq];
+            delete sentTextList[seq];
+        }
+        else if(data.patches)
+        {
+            patchTextboxFromPatches(data.patches);
+            //sendChanges();
+        }
+        else
+        {
+            // console.log("unrecognized message");
+        }
+       
     }
 
     function patchTextboxFromPatches(patches) {
@@ -81,7 +173,7 @@ window.onload = function()
 
     function fetchNote() {
         
-        return fetch('https://' + host + '/notes/' + id)
+        return fetch('http://' + host + '/notes/' + id)
         .then(response => response.json())
         .then(data => {
             return data.value;
@@ -97,7 +189,7 @@ window.onload = function()
         var value = await fetchNote();
         if(value !== null)
         {
-            // sentText = value;
+            // deliveredText = value;
             serverNotePatch(value);
             noteLoadChecker();
 
@@ -124,33 +216,35 @@ window.onload = function()
 
     textbox.onkeyup = function() {
 
-
         if(timeout === null)
         {
-            timeout = setTimeout(sendChanges, 500);
+            timeout = setTimeout(sendChanges, 200);
         }
         else
         {
             clearTimeout(timeout);
-            timeout = setTimeout(sendChanges, 500); 
+            timeout = setTimeout(sendChanges, 200); 
         }
     };
 
 
     function sendChanges() {
+
         
-        if(ws.readyState === ws.OPEN && sentText != textbox.value)
+        // console.log(deliveredText !== textbox.value);
+        
+        if(ws.readyState === ws.OPEN && deliveredText !== textbox.value)
         {
-            console.log(ws.readyState);
-            sentText = textbox.value;
-            var text = sentText;
-            var msg = {id, text}
-            ws.send(JSON.stringify(msg));
-            
+            var seq = seqNo++;
+            var text = textbox.value;
+            sentTextList[seq] = text; 
+            var msg = {id, seq, text}
+            ws.send(JSON.stringify(msg)); 
         }
 
     };
 
 
     wsConnect();
+
 }

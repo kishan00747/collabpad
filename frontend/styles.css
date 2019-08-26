@@ -1,11 +1,16 @@
+/* Setting up the body basics */
+
 body {
     background: #EEEEEE;
     padding: 0px;
     margin:0px;
+    height: 100vh;
     font-size: 14px;
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 
 }
+
+/* Header Style */
 
 header {
     min-height:110px;
@@ -39,16 +44,30 @@ header h3{
 }
 
 
+
+/* Body Style Basics*/
+
 #content {
     display: flex;
     justify-content: center;
     margin: 20px auto;
-    height: 70%;
     min-height: calc(100% - 25%);
     
 }
 
+.text-error{
+    color:red;
+}
+
+.text-success{
+    color:green;
+}
+
 .text-center{
+    text-align: center;
+}
+
+.center {
     text-align: center;
 }
 
@@ -60,30 +79,216 @@ header h3{
     transform: translate(-50%, -50%);
 }
 
-#textbox {
-    width: 90%;
-    font-family: Georgia, 'Times New Roman', Times, serif;
-    font-size: 125%;
-    border-color:#1565C0;
-    border-style: solid;
-    border-width: 20px 1px 20px 1px;
+.icon {
+    width: 25px;
+    height: 25px;
+}
+
+.display-block {
+    display: block;
+}
+
+.display-none {
+    display: none;
+}
+
+.fill-horizontal {
+    width: 100%;
+}
+
+.icon:hover{
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    transition: 0.2s;
+}
+
+.button-custom {
+    cursor: pointer;
+    background-color: #1565C0;
+    color: white;
     border-radius: 3px;
+    border: none;
+    padding: 5px;
+    font-size: 110%;
+    margin: 2px 5px;
+
+
+}
+
+/*Password Panel style */
+
+#password-content {
+    display: flex;
+    flex-direction: column;
+    margin: 20px auto;
+    color: white;
+    min-height: calc(100% - 25%);
+}
+
+#password-content a{
+    cursor: pointer;
+    color: #555;
+}
+
+#password-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 20px auto;
+    width: 60%;
+    border-radius: 3px;
+    border: 2px solid #1565C0;
+}
+
+#password-content img {
+
+    align-self: center;
+    margin: 10px;
+}
+
+#password-panel input[type="password"]
+{
+    font-size: 150%;
     padding: 10px;
+}
+
+#password-panel .panel-footer{
+    margin: 10px;
+}
+
+/* Text Panel Style */
+
+#text-panel {
+    display: flex;
+    flex-direction: column;
+    width: 90%;
+    resize: both;
+    box-sizing: border-box;
+    border: 2px solid #1565C0;
+    border-radius: 3px;
     margin: 0 auto;
     outline: none;
     -moz-box-shadow:    0 0 5px #000000;
     -webkit-box-shadow: 0 0 5px #000000;
     box-shadow:         0 0 5px #000000;
-    
 }
 
-#textbox:focus {
-    border-color: rgb(184, 68, 55);
+.panel-head{
+    box-sizing: border-box;
+    min-height: 40px;
+    background-color: #1565C0;
+    padding: 5px;
+}
+
+#textbox {
+    display:block;
+    flex: 1;
+    margin: 0;
+    border: none;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 8px;
+    resize: none;
+    outline: none;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: 125%;
+}
+
+#text-panel:focus-within {
+    border-color: #b84437;
     -moz-box-shadow:    5px 5px 10px #333;
     -webkit-box-shadow: 5px 5px 10px #333;
     box-shadow:         5px 5px 10px #333;
     transition: 0.3s;
 }
+
+#text-panel:focus-within > .panel-head {
+   background-color: #b84437;
+}
+
+
+
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+
+    font-size: 110%;
+    color: white;
+  }
+
+  .modal-content {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    border: 2px solid #1565C0;
+    border-radius: 3px;
+    outline: none;
+    -moz-box-shadow:    0 0 5px #000000;
+    -webkit-box-shadow: 0 0 5px #000000;
+    box-shadow:         0 0 5px #000000;
+
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    width: 70%; /* Could be more or less, depending on screen size */
+  }
+
+  .modal-header {
+    font-size: 110%;
+    font-style: bold;
+    padding: 5px;
+    background-color: #1565C0;
+  }
+
+  .modal-footer {
+    background-color: #ddd;
+    padding: 5px;
+  }
+
+  .modal h3 {
+      margin: 5px;
+  }
+
+  .modal input[type="password"] {
+      font-size: 120%;
+      padding: 10px 5px;
+      outline: none;
+  }
+
+  #modal_message {
+      display: none;
+      margin: 5px;
+  }
+
+  
+  
+  /* The Close Button */
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+  
+  .close:hover,
+  .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+
+/* Footer Styles */
 
 footer{
     height: 5%;
@@ -98,10 +303,12 @@ footer h4{
     margin: 5px 0 0 0;
 }
 
+/* Media Queries */
+
 @media screen and (max-width: 768px)
 {
     body{
-        font-size: 10px;
+        font-size: 12px;
     }
 
     header{
@@ -115,6 +322,9 @@ footer h4{
 
     #textbox{
         font-size: 120%;
+    }
+
+    #text-panel{
         width:100%;
     }
 

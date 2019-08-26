@@ -3,6 +3,7 @@ const Redis = require('redis');
 const redisServer = require('./constants').redisServer;
 global.Promise = require('bluebird');
 const HNOTES = "notes";
+const HPASS = "passwords"
 
 Promise.promisifyAll(Redis.RedisClient.prototype);
 Promise.promisifyAll(Redis.Multi.prototype);
@@ -34,7 +35,7 @@ redisClient
     });
 
 
-const setDataInRedis = (key, value) => {
+const setNoteInRedis = (key, value) => {
 
     return redisClient.hsetAsync(HNOTES, key, value)
         .then((rep) => {
@@ -43,7 +44,7 @@ const setDataInRedis = (key, value) => {
         })
 }
 
-const getDataFromRedis = (key) => {
+const getNoteFromRedis = (key) => {
 
     const msg = {value: null};
 
@@ -56,12 +57,37 @@ const getDataFromRedis = (key) => {
         .catch(e => {
             return msg;
         })
+}
 
+const setPassInRedis = (key, value) => {
+
+    return redisClient.hsetAsync(HPASS, key, value)
+        .then((rep) => {
+            const msg = {reply: rep}
+            return msg;
+        })
+}
+
+const getPassFromRedis = (key) => {
+
+    const msg = {value: null};
+
+    return redisClient.hgetAsync(HPASS, key)
+        .then( (reply) => {
+            const msg = {value: reply}
+            return msg;
+            }
+        )
+        .catch(e => {
+            return msg;
+        })
 }
 
 
 module.exports = {
     redisClient,
-    setDataInRedis,
-    getDataFromRedis
+    setNoteInRedis,
+    getNoteFromRedis,
+    setPassInRedis,
+    getPassFromRedis
 }

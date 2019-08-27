@@ -237,8 +237,9 @@ window.onload = function()
         {
             var seq = seqNo++;
             var text = textbox.value;
+            var cursor = textbox.selectionEnd;
             sentTextList[seq] = text; 
-            var msg = {id, seq, text}
+            var msg = {id, seq, text, cursor}
             ws.send(JSON.stringify(msg)); 
         }
 

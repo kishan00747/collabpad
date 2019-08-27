@@ -26,12 +26,17 @@ app.use(session({
   secret: 'ninja cat',
   resave: false,
   saveUninitialized: true,
+  cookie: {
+      maxAge: 3600000
+  }
 }))
 
 app.use(bodyParser.json());
 app.use(morgan('combined', {stream: accessLogStream}));
 
 let clients = {};
+let cursors = {};
+
 
 app.ws('/:id', (ws, req) => {
 
@@ -48,7 +53,8 @@ app.ws('/:id', (ws, req) => {
         
         const note = await redis.getNoteFromRedis(response.id);
         const patches = dmp.patch_make(note.value, response.text);
-        
+        ws.id = uniqid();
+        cursors[ws.id] = response.cursor;
         await redis.setNoteInRedis(response.id, response.text);
 
         const seq = response.seq;
@@ -69,7 +75,6 @@ app.ws('/:id', (ws, req) => {
                 {
                     wsc.send(JSON.stringify(broadcastMsg));
                 }
-                
             }
             
         });
@@ -106,9 +111,6 @@ app.post('/notes/password/', asyncMiddleware( async( req, res, next) => {
         const result = {reply: -1};
         res.status(404).json(result);
     }
-  
-    
-    
 
 }));
 
@@ -132,16 +134,15 @@ app.post('/notes/authenticate/', asyncMiddleware( async( req, res, next) => {
                 sess = req.session;
                 if(sess.urls)
                 {
-                    sess.urls.push(id);
+                    sess.urls[id] = hashPass;
                 }
                 else
                 {
-                    sess.urls = [];
-                    sess.urls.push(id);
+                    sess.urls = {};
+                    sess.urls[id] = hashPass;
                 }
                 
             }
-            
             res.status(200).json(response);
         }
         catch(err)
@@ -183,9 +184,10 @@ app.get('/:id', async (req, res, next) => {
         {
             sess = req.session;
             
-            if(sess.urls !== undefined)
+            if(sess.urls !== undefined && sess.urls[id] !== undefined)
             {
-                if(sess.urls.includes(id))
+                const redisPass = await redis.getPassFromRedis(id);
+                if(sess.urls[id] === redisPass.value)
                 {
                     res.sendFile(path.join(__dirname + "/frontend/index.html"));
                 }

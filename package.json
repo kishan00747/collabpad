@@ -27,6 +27,7 @@
     "express-session": "^1.16.2",
     "express-ws": "^4.0.0",
     "morgan": "^1.9.1",
+    "node-random-name": "^1.0.1",
     "redis": "^2.8.0",
     "uniqid": "^5.0.3"
   },

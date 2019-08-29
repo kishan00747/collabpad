@@ -4,17 +4,22 @@ window.onload = function()
     var host = window.location.host;
     
     var textbox = document.getElementById("textbox");
+    var textOverlay = document.getElementById("text-overlay");
     var inputPass = document.getElementById("input_pass");
     var btnPass = document.getElementById("btn_pass");
+    var btnUsers = document.getElementById("btn_users");
     var modalMessage = document.getElementById("modal_message");
     var modalPass = document.getElementById("modal_pass");
+    var modalUsers = document.getElementById("modal_users");
     var btnSubmitPass = document.getElementById("btn_submit_pass");
-    var modalBtnCancel = document.getElementById("btn_cancel_pass");
+    var modalPassBtnCancel = document.getElementById("btn_cancel_pass");
+    var modalUsersBtnCancel = document.getElementById("btn_cancel_users");
 
     var dmp = new diff_match_patch();
     textbox.disabled = true;
     textbox.placeholder = "Note is loading, Please wait...";
     textbox.value = '';
+    var username = '';
     var ws = null;
     var deliveredText = "";
     var timeout = null;
@@ -23,18 +28,58 @@ window.onload = function()
     var sentTextList = {};
     var seqNo = 0;
 
+    var collabCursors = [];
+
     btnPass.onclick = onBtnPassClick;
-    modalBtnCancel.onclick = onModalBtnCancelClick;
+    modalPassBtnCancel.onclick = onModalPassBtnCancelClick;
     btnSubmitPass.onclick = onBtnSubmitPassClick;
+
+    btnUsers.onclick = onBtnUsersClick;
+    modalUsersBtnCancel.onclick = onModalUsersBtnCancelClick;
 
     window.onclick = function(ev){
         if(ev.target === modalPass)
         {
             modalPass.style.display = "none";
+            onModalPassBtnCancelClick();
+        }
+        else if(ev.target === modalUsers)
+        {
+            modalUsers.style.display = "none";
+            onModalUsersBtnCancelClick();
         }
     }
 
-    function onModalBtnCancelClick(ev){
+    function onBtnUsersClick(ev){
+        modalUsers.style.display = "block";
+        var modalBody = modalUsers.getElementsByClassName("modal-body")[0];
+        
+        var ul = document.createElement("ul");
+
+        var li = document.createElement("li");
+        li.appendChild(document.createTextNode(username));
+        ul.appendChild(li);
+
+        collabCursors.forEach( function(user, i) {
+
+            var li = document.createElement("li");
+            li.appendChild(document.createTextNode(user.clname));
+            ul.appendChild(li);
+
+        });
+
+        modalBody.appendChild(ul);
+        
+
+    }
+
+    function onModalUsersBtnCancelClick(ev){
+        var modalBody = modalUsers.getElementsByClassName("modal-body")[0];
+        modalBody.removeChild(modalBody.querySelector("ul"));
+        modalUsers.style.display = "none";
+    }
+
+    function onModalPassBtnCancelClick(ev){
         modalPass.style.display = "none";
     }
 
@@ -122,22 +167,91 @@ window.onload = function()
     function wsOnMessage(ev) { 
             
         const data = JSON.parse(ev.data);
-        if(data.seq !== undefined)
+        switch(data.msgCode)
         {
-            var seq = data.seq;
-            deliveredText = sentTextList[seq];
-            delete sentTextList[seq];
-        }
-        else if(data.patches)
-        {
-            patchTextboxFromPatches(data.patches);
-            //sendChanges();
-        }
-        else
-        {
-            // console.log("unrecognized message");
+            case 1:
+                {
+                    var collabInfo = {};
+                    collabInfo.clname = data.clname;
+                    collabInfo.cp = data.cp;
+                    
+                    if(collabInfo.color === undefined)
+                    {
+                        collabInfo.color = getRandomColor();
+                    }
+
+                    var collabExists = collabCursors.filter(function(x){
+                        return x.clname === data.clname;
+                    })
+                    
+                    if( !(collabExists.length > 0) )
+                    {
+                        collabCursors.push(collabInfo);
+                        console.log("Collablist", collabCursors);
+                    }
+                    else
+                    {
+                        collabExists[0].cp = data.cp;
+                        delete collabInfo;
+                    }
+
+                    
+                    
+                    patchTextboxFromPatches(data.patches,data.cp);
+                    
+                    //collabcur = data.cp;
+                    //sendChanges();
+                    break;
+                }
+
+            case 2:
+                {
+                    var seq = data.seq;
+                    deliveredText = sentTextList[seq];
+                    delete sentTextList[seq];
+                    break;
+                }
+
+            case 3:
+                {
+                    for(var x = 0; x < collabCursors.length; x++) 
+                    {
+                        if(collabCursors[x].clname === data.clname)
+                        {
+                            collabCursors.splice(x, 1);
+                            break;
+                        }
+                    }
+                    console.log("Removed collab", collabCursors);
+                    break;
+                }
+            case 4:
+                {
+                    username = data.clname;
+                    document.getElementById("username").innerText = username;
+                    console.log(username);
+                    break;
+                }
+
+
+            default:
+                {
+
+                }
         }
        
+    }
+	
+	
+
+    function getRandomColor() 
+    {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
     }
 
     function patchTextboxFromPatches(patches) {
@@ -147,7 +261,7 @@ window.onload = function()
         const caretPosition = textbox.selectionStart;
         lastUpdatedCopy = result[0];
         textbox.value = result[0];
-
+        
         if(patches && (patches.length !== 0) )
         { 
             offset = getCaretOffset(patches, caretPosition);
@@ -155,6 +269,8 @@ window.onload = function()
             textbox.selectionStart = caretPosition + offset;
             textbox.selectionEnd = caretPosition + offset;
         }
+
+        generateHTMLFromText();
 
     }
 
@@ -216,6 +332,10 @@ window.onload = function()
 
     textbox.onkeyup = function() {
 
+        
+        console.log(textbox.value);
+        generateHTMLFromText();
+
         if(timeout === null)
         {
             timeout = setTimeout(sendChanges, 200);
@@ -227,6 +347,31 @@ window.onload = function()
         }
     };
 
+    function generateHTMLFromText()
+    {
+        var text = textbox.value;
+
+        textOverlay.innerText = text;
+
+        // for(var i = 0; i < text; i++)
+        // {
+        //     if( isNewLine(text.charAt(i)) )
+        //     {
+        //         textOverlay.appendChild(document.createElement("br"));
+        //     }
+        //     else
+        //     {
+        //         textOverlay.inner
+        //     }
+
+        // }
+    }
+
+    function isNewLine(c)
+    {
+        return (c === '\n');
+    }
+
 
     function sendChanges() {
 
@@ -237,10 +382,11 @@ window.onload = function()
         {
             var seq = seqNo++;
             var text = textbox.value;
-            var cursor = textbox.selectionEnd;
+            var cp = textbox.selectionEnd;
             sentTextList[seq] = text; 
-            var msg = {id, seq, text, cursor}
-            ws.send(JSON.stringify(msg)); 
+            var msg = {id, seq, text, cp}
+            ws.send(JSON.stringify(msg));
+            console.log("sending changes");
         }
 
     };

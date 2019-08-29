@@ -26,7 +26,9 @@
         <div id="content">
             <div id="text-panel">
                 <div class="panel-head">
-                    <img id="btn_pass" class="icon"  src="lock_white_stroke.png"/>
+                    <img id="btn_users" class="icon title-bar"  src="users.png"/>
+                    <img id="btn_pass" class="icon title-bar"  src="lock_white_stroke.png"/>
+                    <span id="username" class="title-bar">Username</span>
                 </div>
                 <div class="panel-body">
                         <textarea autocomplete="off" disabled placeholder="Note is loading, Please wait..." id="textbox"></textarea>
@@ -53,6 +55,22 @@
                 </div>
             </div>
         </div>
+
+        <div id="modal_users" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Collaborators</h3>
+                    </div>
+                    <div class="modal-body">
+                    </div>
+                    <div class="modal-footer">
+                        <div class="center">
+                            <button id="btn_cancel_users" class="button-custom center ">Cancel</button>
+                            <p id="modal_message" class="text-error"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
     
     <footer>
         <div class='text-center'>

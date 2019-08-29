@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const cors = require('cors');
 const path = require('path');
+const nodeRandomName = require('node-random-name');
 const bodyParser = require('body-parser');
 const asyncMiddleware = require('./utils').asyncMiddleware;
 const uniqid = require('uniqid');
@@ -35,16 +36,71 @@ app.use(bodyParser.json());
 app.use(morgan('combined', {stream: accessLogStream}));
 
 let clients = {};
-let cursors = {};
+
+
+// app.ws('/:id', (ws, req) => {
+
+//     const id = req.params.id;
+
+//     if (!clients[id]) {
+//         clients[id] = [ws];
+//     } else {
+//         clients[id].push(ws);
+//     }
+
+//     ws.on('message', async (msg) => {
+//         const response = JSON.parse(msg);
+        
+//         const note = await redis.getNoteFromRedis(response.id);
+//         const patches = dmp.patch_make(note.value, response.text);
+//         ws.id = uniqid();
+//         cursors[ws.id] = response.cursor;
+//         await redis.setNoteInRedis(response.id, response.text);
+
+//         const seq = response.seq;
+//         ws.send(JSON.stringify({seq}));
+
+//         const broadcastList = clients[response.id];
+//         const broadcastMsg = {patches}
+        
+//         broadcastList.forEach( (wsc, i) => {
+
+//             if( !(wsc === ws) )
+//             {
+//                 if(wsc.readyState !== ws.OPEN)
+//                 {
+//                     broadcastList.splice(i, 1);
+//                 }
+//                 else
+//                 {
+//                     wsc.send(JSON.stringify(broadcastMsg));
+//                 }
+//             }
+            
+//         });
+        
+//     })
+    
+// });
 
 
 app.ws('/:id', (ws, req) => {
 
     const id = req.params.id;
 
-    if (!clients[id]) {
+    ws['clname'] = nodeRandomName();
+    ws.send(JSON.stringify(
+        {
+            msgCode: 4,
+            clname: ws['clname']
+        }
+    ));
+
+    if (!clients[id]) 
+    {     
         clients[id] = [ws];
-    } else {
+    } else 
+    {
         clients[id].push(ws);
     }
 
@@ -53,23 +109,33 @@ app.ws('/:id', (ws, req) => {
         
         const note = await redis.getNoteFromRedis(response.id);
         const patches = dmp.patch_make(note.value, response.text);
-        ws.id = uniqid();
-        cursors[ws.id] = response.cursor;
         await redis.setNoteInRedis(response.id, response.text);
 
         const seq = response.seq;
-        ws.send(JSON.stringify({seq}));
+        ws.send(JSON.stringify(
+            {
+                msgCode: 2,
+                seq
+        }));
 
         const broadcastList = clients[response.id];
-        const broadcastMsg = {patches}
+        var cp = response.cp;
+        var clname = ws['clname'];
+        const broadcastMsg = {
+            msgCode: 1,
+            patches,
+            cp,
+            clname
+        };
         
         broadcastList.forEach( (wsc, i) => {
 
             if( !(wsc === ws) )
             {
-                if(wsc.readyState !== ws.OPEN)
+                if(wsc.readyState !== 1)
                 {
                     broadcastList.splice(i, 1);
+                    notifySocketDown(broadcastList, wsc);
                 }
                 else
                 {
@@ -82,6 +148,23 @@ app.ws('/:id', (ws, req) => {
     })
     
 });
+
+
+notifySocketDown = (broadCastList, closedSocket) =>
+{
+    var broadcastMsg = {
+        msgCode: 3,
+        clname: closedSocket.clname
+    }
+
+    broadCastList.forEach( (wsc, i) => {
+        if(wsc.readyState === 1)
+        {
+            wsc.send(JSON.stringify(broadcastMsg));
+        }
+    });
+
+}
 
 app.get('/', asyncMiddleware( async (req, res, next) => {
 

@@ -19,7 +19,10 @@ window.onload = function()
     textbox.disabled = true;
     textbox.placeholder = "Note is loading, Please wait...";
     textbox.value = '';
-    var username = '';
+    var user = {
+        cp: 0,
+        color: "#ffffff"
+    };
     var ws = null;
     var deliveredText = "";
     var timeout = null;
@@ -56,9 +59,9 @@ window.onload = function()
         
         var ul = document.createElement("ul");
 
-        var li = document.createElement("li");
-        li.appendChild(document.createTextNode(username));
-        ul.appendChild(li);
+        // var li = document.createElement("li");
+        // li.appendChild(document.createTextNode(user.clname));
+        // ul.appendChild(li);
 
         collabCursors.forEach( function(user, i) {
 
@@ -169,7 +172,7 @@ window.onload = function()
         const data = JSON.parse(ev.data);
         switch(data.msgCode)
         {
-            case 1:
+            case 1: // New patch and correpsonding collab cursor info
                 {
                     var collabInfo = {};
                     collabInfo.clname = data.clname;
@@ -199,12 +202,10 @@ window.onload = function()
                     
                     patchTextboxFromPatches(data.patches,data.cp);
                     
-                    //collabcur = data.cp;
-                    //sendChanges();
                     break;
                 }
 
-            case 2:
+            case 2: //Sequence Number Reply for Delivery of Changed Text
                 {
                     var seq = data.seq;
                     deliveredText = sentTextList[seq];
@@ -212,7 +213,7 @@ window.onload = function()
                     break;
                 }
 
-            case 3:
+            case 3: //Remove a collaborator
                 {
                     for(var x = 0; x < collabCursors.length; x++) 
                     {
@@ -225,11 +226,12 @@ window.onload = function()
                     console.log("Removed collab", collabCursors);
                     break;
                 }
-            case 4:
+            case 4: // On connection to server, assigned username.
                 {
-                    username = data.clname;
-                    document.getElementById("username").innerText = username;
-                    console.log(username);
+                    user.clname = data.clname;
+                    user.color = "#000000";
+                    collabCursors.push(user);
+                    document.getElementById("username").innerText = user.clname;
                     break;
                 }
 
@@ -357,23 +359,22 @@ window.onload = function()
 
     function generateHTMLFromText()
     {
+        user.cp = textbox.selectionEnd;
+
         var text = textbox.value;
-        var caretSpan = document.createElement('span');
-        caretSpan.style.color = "white";
-        caretSpan.style.borderColor = "black";
-        caretSpan.classList.add("blink-cursor");
+        
         textOverlay.innerHTML = '';
 
-        if(textbox.selectionEnd === 0)
-        {
-            textOverlay.appendChild(caretSpan);
-        }
+        // if(textbox.selectionEnd === 0)
+        // {
+        //     textOverlay.appendChild(caretSpan);
+        // }
 
         var lineText = '';
 
         if(isCaretPos(0))
         {
-            textOverlay.appendChild(caretSpan);
+            appendCarets(textOverlay, getCollabsAtPos(0));
         }
 
 
@@ -395,9 +396,10 @@ window.onload = function()
                 }
             }
 
-            if( isCaretPos(i) )
+            if( isCaretPos(i + 1) )
             {
-                textOverlay.appendChild(caretSpan);
+                console.log("here");
+                appendCarets(textOverlay, getCollabsAtPos(i+1));
             }
 
         }
@@ -419,7 +421,7 @@ window.onload = function()
 
     function isCaretPos(i)
     {
-        if( (textbox.selectionEnd - 1) === i)
+        if( getCollabsAtPos(i).length > 0)
         {
             return true;
         }
@@ -427,6 +429,37 @@ window.onload = function()
         {
             return false;
         }
+    }
+
+    function getCollabsAtPos(pos)
+    {
+        var collabsAtPos = [];
+
+        for( var i = 0; i < collabCursors.length; i++ )
+        {
+            if(collabCursors[i].cp === pos)
+            {
+                collabsAtPos.push(collabCursors[i]);
+            }
+        }
+
+        return collabsAtPos;
+    }
+
+    function appendCarets(parent, collabs)
+    {
+        var caretSpan;
+        collabs.forEach(function(collab) {
+            caretSpan = document.createElement('span');
+            caretSpan.style.color = "white";
+            caretSpan.style.borderColor = collab.color;
+            caretSpan.classList.add("blink-cursor");
+
+            parent.appendChild(caretSpan);
+
+        })
+        
+        console.log("Collabs carets", collabs);
     }
 
     function getLineText(text, start)
@@ -439,7 +472,7 @@ window.onload = function()
                 break;
             }
 
-            if( isCaretPos(i) )
+            if( isCaretPos(i + 1) )
             {
                 lineText += text.charAt(i);
                 break;

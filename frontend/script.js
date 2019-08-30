@@ -379,7 +379,6 @@ window.onload = function()
 
         for(var i = 0; i < text.length; i++)
         {
-            console.log(textbox.selectionEnd);
             var c = text.charAt(i);
 
             if( isNewLine(c) )
@@ -389,7 +388,6 @@ window.onload = function()
             else
             {
                 lineText = getLineText(text, i);
-                console.log(lineText);
                 textOverlay.appendChild(document.createTextNode(lineText));
                 if(lineText.length > 0)
                 {
@@ -403,6 +401,15 @@ window.onload = function()
             }
 
         }
+
+        if(text === '')
+        {
+            var placeholderTextNode = document.createElement("span");
+            placeholderTextNode.appendChild(document.createTextNode("Write Here..."));
+            placeholderTextNode.style.color = "grey";
+            textOverlay.appendChild(placeholderTextNode);
+        }
+
     }
 
     function isNewLine(c)

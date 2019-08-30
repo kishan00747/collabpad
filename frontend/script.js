@@ -230,7 +230,10 @@ window.onload = function()
                 {
                     user.clname = data.clname;
                     user.color = "#000000";
-                    collabCursors.push(user);
+                    if(!collabCursors.includes(user))
+                    {
+                        collabCursors.push(user);
+                    }
                     document.getElementById("username").innerText = user.clname;
                     break;
                 }

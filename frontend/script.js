@@ -329,11 +329,12 @@ window.onload = function()
         patchTextboxFromPatches(patches);
     }
 
+    textbox.onclick = generateHTMLFromText;
 
-    textbox.onkeyup = function() {
+    textbox.onpaste = generateHTMLFromText;
 
-        
-        console.log(textbox.value);
+    textbox.onkeyup = function(e) {
+
         generateHTMLFromText();
 
         if(timeout === null)
@@ -347,29 +348,100 @@ window.onload = function()
         }
     };
 
+    textbox.onscroll = function(e) {
+        console.log("textbox scroll height", this.scrollHeight);
+        textOverlay.scrollHeight = this.scrollHeight;
+        textOverlay.scrollTop = this.scrollTop;
+    }
+
+
     function generateHTMLFromText()
     {
         var text = textbox.value;
+        var caretSpan = document.createElement('span');
+        caretSpan.style.color = "white";
+        caretSpan.style.borderColor = "black";
+        caretSpan.classList.add("blink-cursor");
+        textOverlay.innerHTML = '';
 
-        textOverlay.innerText = text;
+        if(textbox.selectionEnd === 0)
+        {
+            textOverlay.appendChild(caretSpan);
+        }
 
-        // for(var i = 0; i < text; i++)
-        // {
-        //     if( isNewLine(text.charAt(i)) )
-        //     {
-        //         textOverlay.appendChild(document.createElement("br"));
-        //     }
-        //     else
-        //     {
-        //         textOverlay.inner
-        //     }
+        var lineText = '';
 
-        // }
+        if(isCaretPos(0))
+        {
+            textOverlay.appendChild(caretSpan);
+        }
+
+
+        for(var i = 0; i < text.length; i++)
+        {
+            console.log(textbox.selectionEnd);
+            var c = text.charAt(i);
+
+            if( isNewLine(c) )
+            {
+                textOverlay.appendChild(document.createElement("br"));
+            }
+            else
+            {
+                lineText = getLineText(text, i);
+                console.log(lineText);
+                textOverlay.appendChild(document.createTextNode(lineText));
+                if(lineText.length > 0)
+                {
+                    i += lineText.length - 1;
+                }
+            }
+
+            if( isCaretPos(i) )
+            {
+                textOverlay.appendChild(caretSpan);
+            }
+
+        }
     }
 
     function isNewLine(c)
     {
         return (c === '\n');
+    }
+
+    function isCaretPos(i)
+    {
+        if( (textbox.selectionEnd - 1) === i)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    function getLineText(text, start)
+    {
+        var lineText = '';
+        for(var i = start; i < text.length; i++)
+        {
+            if( isNewLine(text.charAt(i)) )
+            {
+                break;
+            }
+
+            if( isCaretPos(i) )
+            {
+                lineText += text.charAt(i);
+                break;
+            }
+
+            lineText += text.charAt(i);
+        }
+
+        return lineText;
     }
 
 

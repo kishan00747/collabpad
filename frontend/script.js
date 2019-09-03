@@ -67,6 +67,10 @@ window.onload = function()
 
             var li = document.createElement("li");
             li.appendChild(document.createTextNode(user.clname));
+            var colorSpan = document.createElement("span");
+            colorSpan.classList.add("colorRect");
+            colorSpan.style.backgroundColor = user.color;
+            li.appendChild(colorSpan);
             ul.appendChild(li);
 
         });
@@ -457,6 +461,7 @@ window.onload = function()
             caretSpan.style.color = "white";
             caretSpan.style.borderColor = collab.color;
             caretSpan.classList.add("blink-cursor");
+            caretSpan.classList.add("collab-cursor");
 
             parent.appendChild(caretSpan);
 

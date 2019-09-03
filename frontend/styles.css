@@ -248,13 +248,6 @@ header h3{
 
 }
 
-/* #text-overlay span {
-  z-index: 3;
-  opacity: 2;
-  width: 1px;
-} */
-
-
 
 
 /* The Modal (background) */
@@ -323,6 +316,16 @@ header h3{
       margin: 5px;
   }
 
+  .colorRect {
+    display: inline-block;
+    margin: 0px 5px;
+    border: 1px solid black;
+    min-width: 10px;
+    min-height: 10px;
+    margin-bottom: 2px;
+    vertical-align: middle;
+  }
+
   
   
   /* The Close Button */
@@ -379,6 +382,11 @@ footer h4{
 
     #text-panel{
         width:100%;
+    }
+
+    .colorRect {
+      width: 8px;
+      height: 8px;
     }
 
 

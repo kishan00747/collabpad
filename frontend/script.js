@@ -353,6 +353,7 @@ window.onload = function()
                 isNoteLoaded = true;
                 textbox.disabled = false;
                 textbox.placeholder = "Write Here...";
+                textbox.focus();
             }
     }
 

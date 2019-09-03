@@ -113,7 +113,7 @@ window.onload = function()
             password: inputPass.value
         }
         
-        fetch('https://' + host + '/notes/password/', {
+        fetch('http://' + host + '/notes/password/', {
             method: 'POST',
             body: JSON.stringify(data), 
             headers:{
@@ -145,7 +145,7 @@ window.onload = function()
 
 
     function wsConnect() {
-        ws = new WebSocket('wss://' + host + '/' + id);
+        ws = new WebSocket('ws://' + host + '/' + id);
 
         ws.onopen = function() {
             // console.log(textbox.value);
@@ -323,7 +323,7 @@ window.onload = function()
 
     function fetchNote() {
         
-        return fetch('https://' + host + '/notes/' + id)
+        return fetch('http://' + host + '/notes/' + id)
         .then(response => response.json())
         .then(data => {
             return data.value;

@@ -232,6 +232,7 @@ header h3{
 
 #text-overlay{
     overflow: auto;
+    overflow-wrap: break-word;
     font-size: 125%;
     font-family: Georgia, 'Times New Roman', Times, serif;
     /* line-height: 125%; */

@@ -32,12 +32,12 @@ app.use(session({
   }
 }))
 
-app.use(function(req, res, next) {
-    if(!req.secure) {
-      return res.redirect(['https://', req.hostname, req.url].join(''));
-    }
-    next();
-  });
+// app.use(function(req, res, next) {
+//     if(!req.secure) {
+//       return res.redirect(['https://', req.hostname, req.url].join(''));
+//     }
+//     next();
+//   });
 
 app.use(bodyParser.json());
 app.use(morgan('combined', {stream: accessLogStream}));

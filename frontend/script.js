@@ -535,9 +535,9 @@ window.onload = function()
         {
             var seq = seqNo++;
             var text = textbox.value;
-            var cp = textbox.selectionEnd;
+            var cursorPos = textbox.selectionEnd;
             sentTextList[seq] = text; 
-            var msg = {id, seq, text, cp}
+            var msg = {id, seq, text, cursorPos}
             ws.send(JSON.stringify(msg));
             console.log("sending changes");
         }

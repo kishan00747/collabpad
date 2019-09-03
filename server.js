@@ -1,4 +1,5 @@
 const express = require('express');
+const msgCode = require('./constants').msgCode;
 const port = process.env.PORT || 3002;
 const redis = require('./redis.config');
 const fs = require('fs');
@@ -13,12 +14,12 @@ const uniqid = require('uniqid');
 const morgan = require('morgan');
 const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {flags: 'a'});
 const DiffMatchPatch = require('diff-match-patch');
-const dmp = new DiffMatchPatch();
 const session = require('express-session');
 
 
 const app = express();
 const expressWs = require('express-ws')(app);
+const dmp = new DiffMatchPatch();
 
 
 app.use(cors());
@@ -44,53 +45,6 @@ app.use(morgan('combined', {stream: accessLogStream}));
 
 let clients = {};
 
-
-// app.ws('/:id', (ws, req) => {
-
-//     const id = req.params.id;
-
-//     if (!clients[id]) {
-//         clients[id] = [ws];
-//     } else {
-//         clients[id].push(ws);
-//     }
-
-//     ws.on('message', async (msg) => {
-//         const response = JSON.parse(msg);
-        
-//         const note = await redis.getNoteFromRedis(response.id);
-//         const patches = dmp.patch_make(note.value, response.text);
-//         ws.id = uniqid();
-//         cursors[ws.id] = response.cursor;
-//         await redis.setNoteInRedis(response.id, response.text);
-
-//         const seq = response.seq;
-//         ws.send(JSON.stringify({seq}));
-
-//         const broadcastList = clients[response.id];
-//         const broadcastMsg = {patches}
-        
-//         broadcastList.forEach( (wsc, i) => {
-
-//             if( !(wsc === ws) )
-//             {
-//                 if(wsc.readyState !== ws.OPEN)
-//                 {
-//                     broadcastList.splice(i, 1);
-//                 }
-//                 else
-//                 {
-//                     wsc.send(JSON.stringify(broadcastMsg));
-//                 }
-//             }
-            
-//         });
-        
-//     })
-    
-// });
-
-
 app.ws('/:id', (ws, req) => {
 
     const id = req.params.id;
@@ -98,7 +52,7 @@ app.ws('/:id', (ws, req) => {
     ws['clname'] = nodeRandomName();
     ws.send(JSON.stringify(
         {
-            msgCode: 4,
+            msgCode: msgCode.ASS_USERNAME,
             clname: ws['clname']
         }
     ));
@@ -122,17 +76,17 @@ app.ws('/:id', (ws, req) => {
         const seq = response.seq;
         ws.send(JSON.stringify(
             {
-                msgCode: 2,
+                msgCode: msgCode.SEQ_NUM,
                 seq
         }));
 
         const broadcastList = clients[response.id];
-        var cp = response.cp;
+        var cursorPos = response.cursorPos;
         var clname = ws['clname'];
         const broadcastMsg = {
-            msgCode: 1,
+            msgCode: msgCode.NEW_PATCH,
             patches,
-            cp,
+            cursorPos,
             clname
         };
         
@@ -161,7 +115,7 @@ app.ws('/:id', (ws, req) => {
 notifySocketDown = (broadCastList, closedSocket) =>
 {
     var broadcastMsg = {
-        msgCode: 3,
+        msgCode: msgCode.COLLAB_REM,
         clname: closedSocket.clname
     }
 
@@ -193,14 +147,24 @@ app.post('/notes/password/', asyncMiddleware( async( req, res, next) => {
 
     if(pass !== undefined && id !== undefined)
     {
-        const hashPass = await bcrypt.hash(pass, saltRounds);
-        const result = await redis.setPassInRedis(id, hashPass); 
-        res.status(200).json(result);    
+        const note = await redis.getNoteFromRedis(id);
+
+        if(note.value !== null)
+        {
+            const hashPass = await bcrypt.hash(pass, saltRounds);
+            const result = await redis.setPassInRedis(id, hashPass); 
+            res.status(200).json(result);    
+        }
+        else
+        {
+            res.status(404).send();
+        }
+        
     }
     else
     {
         const result = {reply: -1};
-        res.status(404).json(result);
+        res.status(400).json(result);
     }
 
 }));
@@ -243,7 +207,7 @@ app.post('/notes/authenticate/', asyncMiddleware( async( req, res, next) => {
     }
     else
     {
-        res.status(404).json({reply: false});
+        res.status(400).json({reply: false});
     }
 
 

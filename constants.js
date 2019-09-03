@@ -8,7 +8,16 @@ const redisServer = {
 
 }
 
+const msgCode = {
+    
+   NEW_PATCH : 1,
+   SEQ_NUM: 2,
+   COLLAB_REM: 3,
+   ASS_USERNAME: 4 
+
+}
+
 
 module.exports = {
-    redisServer
+    redisServer, msgCode
 }

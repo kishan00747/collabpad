@@ -21,7 +21,7 @@ window.onload = function()
     textbox.placeholder = "Note is loading, Please wait...";
     textbox.value = '';
     var user = {
-        cp: 0,
+        cursorPos: 0,
         color: "#ffffff"
     };
     var ws = null;
@@ -176,7 +176,7 @@ window.onload = function()
     {
         var collabInfo = {};
         collabInfo.clname = patchMsg.clname;
-        collabInfo.cp = patchMsg.cp;
+        collabInfo.cursorPos = patchMsg.cursorPos;
         
         if(collabInfo.color === undefined)
         {
@@ -194,7 +194,7 @@ window.onload = function()
         }
         else
         {
-            collabExists[0].cp = patchMsg.cp;
+            collabExists[0].cursorPos = patchMsg.cursorPos;
             delete collabInfo;
         }
 
@@ -399,7 +399,7 @@ window.onload = function()
 
     function generateHTMLFromText()
     {
-        user.cp = textbox.selectionEnd;
+        user.cursorPos = textbox.selectionEnd;
 
         var text = textbox.value;
         
@@ -477,7 +477,7 @@ window.onload = function()
 
         for( var i = 0; i < collabCursors.length; i++ )
         {
-            if(collabCursors[i].cp === pos)
+            if(collabCursors[i].cursorPos === pos)
             {
                 collabsAtPos.push(collabCursors[i]);
             }

@@ -14,6 +14,7 @@ window.onload = function()
     var btnSubmitPass = document.getElementById("btn_submit_pass");
     var modalPassBtnCancel = document.getElementById("btn_cancel_pass");
     var modalUsersBtnCancel = document.getElementById("btn_cancel_users");
+    var patchList = [];
 
     var dmp = new diff_match_patch();
     textbox.disabled = true;
@@ -25,7 +26,8 @@ window.onload = function()
     };
     var ws = null;
     var deliveredText = "";
-    var timeout = null;
+    var timeoutSend = null;
+    var timeoutPatch = null;
     var lastUpdatedCopy = "";
     var isNoteLoaded = false;
     var sentTextList = {};
@@ -170,6 +172,48 @@ window.onload = function()
 
     }
 
+    function processPatchMsg(patchMsg)
+    {
+        var collabInfo = {};
+        collabInfo.clname = patchMsg.clname;
+        collabInfo.cp = patchMsg.cp;
+        
+        if(collabInfo.color === undefined)
+        {
+            collabInfo.color = getRandomColor();
+        }
+
+        var collabExists = collabCursors.filter(function(x){
+            return x.clname === patchMsg.clname;
+        })
+        
+        if( !(collabExists.length > 0) )
+        {
+            collabCursors.push(collabInfo);
+            console.log("Collablist", collabCursors);
+        }
+        else
+        {
+            collabExists[0].cp = patchMsg.cp;
+            delete collabInfo;
+        }
+
+ 
+        patchTextboxFromPatches(patchMsg.patches,patchMsg.cp);
+    }
+
+    function applyPendingPatches()
+    {
+        if(patchList.length > 0)
+        {
+            patchMsg = patchList.shift();
+            processPatchMsg(patchMsg);
+
+            timeoutPatch = setTimeout(applyPendingPatches, 100);
+        }
+            
+    }
+
 
     function wsOnMessage(ev) { 
             
@@ -178,34 +222,7 @@ window.onload = function()
         {
             case 1: // New patch and correpsonding collab cursor info
                 {
-                    var collabInfo = {};
-                    collabInfo.clname = data.clname;
-                    collabInfo.cp = data.cp;
-                    
-                    if(collabInfo.color === undefined)
-                    {
-                        collabInfo.color = getRandomColor();
-                    }
-
-                    var collabExists = collabCursors.filter(function(x){
-                        return x.clname === data.clname;
-                    })
-                    
-                    if( !(collabExists.length > 0) )
-                    {
-                        collabCursors.push(collabInfo);
-                        console.log("Collablist", collabCursors);
-                    }
-                    else
-                    {
-                        collabExists[0].cp = data.cp;
-                        delete collabInfo;
-                    }
-
-                    
-                    
-                    patchTextboxFromPatches(data.patches,data.cp);
-                    
+                    processPatchMsg(data);
                     break;
                 }
 
@@ -265,9 +282,11 @@ window.onload = function()
 
     function patchTextboxFromPatches(patches) {
         console.log(patches);
+        textbox.disabled = true;
+
         const result = dmp.patch_apply(patches, textbox.value);
         let offset;
-        const caretPosition = textbox.selectionStart;
+        const caretPosition = textbox.selectionEnd;
         lastUpdatedCopy = result[0];
         textbox.value = result[0];
         
@@ -277,9 +296,15 @@ window.onload = function()
 
             textbox.selectionStart = caretPosition + offset;
             textbox.selectionEnd = caretPosition + offset;
+            // textbox.selectionStart += offset;
+            // textbox.selectionEnd += offset;
+
         }
 
         generateHTMLFromText();
+
+        textbox.disabled = false;
+        textbox.focus();
 
     }
 
@@ -346,19 +371,26 @@ window.onload = function()
 
         generateHTMLFromText();
 
-        if(timeout === null)
+        // if(timeoutPatch !== null)
+        // {
+        //     clearTimeout(timeoutPatch);
+        //     timeoutPatch = setTimeout(applyPendingPatches, 500);
+        // }
+
+        if(timeoutSend === null)
         {
-            timeout = setTimeout(sendChanges, 200);
+            timeoutSend = setTimeout(sendChanges, 1000);
         }
         else
         {
-            clearTimeout(timeout);
-            timeout = setTimeout(sendChanges, 200); 
+            clearTimeout(timeoutSend);
+            timeoutSend = setTimeout(sendChanges, 1000); 
         }
+
+        
     };
 
     textbox.onscroll = function(e) {
-        console.log("textbox scroll height", this.scrollHeight);
         textOverlay.scrollHeight = this.scrollHeight;
         textOverlay.scrollTop = this.scrollTop;
     }

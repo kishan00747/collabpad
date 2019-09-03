@@ -116,7 +116,8 @@ app.ws('/:id', (ws, req) => {
         
         const note = await redis.getNoteFromRedis(response.id);
         const patches = dmp.patch_make(note.value, response.text);
-        await redis.setNoteInRedis(response.id, response.text);
+        
+        await redis.setNoteInRedis(response.id, dmp.patch_apply(patches, note.value)[0]);
 
         const seq = response.seq;
         ws.send(JSON.stringify(

@@ -202,17 +202,7 @@ window.onload = function()
         patchTextboxFromPatches(patchMsg.patches,patchMsg.cp);
     }
 
-    function applyPendingPatches()
-    {
-        if(patchList.length > 0)
-        {
-            patchMsg = patchList.shift();
-            processPatchMsg(patchMsg);
-
-            timeoutPatch = setTimeout(applyPendingPatches, 100);
-        }
-            
-    }
+    
 
 
     function wsOnMessage(ev) { 
@@ -372,12 +362,6 @@ window.onload = function()
 
         generateHTMLFromText();
 
-        // if(timeoutPatch !== null)
-        // {
-        //     clearTimeout(timeoutPatch);
-        //     timeoutPatch = setTimeout(applyPendingPatches, 500);
-        // }
-
         if(timeoutSend === null)
         {
             timeoutSend = setTimeout(sendChanges, 1000);
@@ -395,6 +379,7 @@ window.onload = function()
         textOverlay.scrollHeight = this.scrollHeight;
         textOverlay.scrollTop = this.scrollTop;
     }
+
 
 
     function generateHTMLFromText()
@@ -438,11 +423,12 @@ window.onload = function()
 
             if( isCaretPos(i + 1) )
             {
-                console.log("here");
                 appendCarets(textOverlay, getCollabsAtPos(i+1));
             }
 
         }
+
+        setSelection();
 
         if(text === '')
         {
@@ -454,6 +440,71 @@ window.onload = function()
 
     }
 
+    function setSelection()
+    {
+        if(textbox.selectionStart === textbox.selectionEnd)
+        {
+            return;
+        }
+
+        var win = textOverlay.ownerDocument.defaultView;
+        var range = document.createRange();
+        var sel = win.getSelection();
+
+        var selectionStart = textbox.selectionStart;
+        var selectionEnd = textbox.selectionEnd;
+
+        var selStartInfo = getNodeOfPos(selectionStart);
+        var selEndInfo = getNodeOfPos(selectionEnd);
+
+        range.setStart(selStartInfo[0], selStartInfo[1]);
+        range.setEnd(selEndInfo[0], selEndInfo[1]);
+
+        sel.removeAllRanges()
+        sel.addRange(range);
+
+        textbox.focus();
+        
+    }
+
+    function getNodeOfPos(pos)
+    {
+        var childNodes = textOverlay.childNodes;
+        var currPos = 0;
+        var nodeLength = 0;
+
+        for(child of childNodes)
+        {
+            if(child.tagName == 'BR')
+            {
+                nodeLength = 1;
+            }
+            else
+            {
+                nodeLength = child.textContent.length;
+            }
+
+            if( (currPos + nodeLength) > pos)
+            {
+                if(child.tagName == 'BR')
+                {
+                    return [child, 0];
+                }
+
+                return [child, pos - currPos];
+            }
+            else
+            {
+                currPos += nodeLength;
+            }
+        }
+
+        return [childNodes[childNodes.length - 1], pos-currPos];
+
+    }
+
+
+
     function isNewLine(c)
     {
         return (c === '\n');
@@ -461,6 +512,11 @@ window.onload = function()
 
     function isCaretPos(i)
     {
+        if(textbox.selectionStart === i || textbox.selectionEnd === i)
+        {
+            return true;
+        }
+
         if( getCollabsAtPos(i).length > 0)
         {
             return true;

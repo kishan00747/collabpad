@@ -1,3 +1,4 @@
+const mode = process.env.mode;
 const express = require('express');
 const msgCode = require('./constants').msgCode;
 const port = process.env.PORT || 3002;
@@ -20,6 +21,21 @@ const session = require('express-session');
 const app = express();
 const expressWs = require('express-ws')(app);
 const dmp = new DiffMatchPatch();
+
+var forceSsl = function (req, res, next) {
+    if (req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect(['https://', req.get('Host'), req.url].join(''));
+    }
+    return next();
+ };
+
+ app.configure(function () {
+
+    if (mode === 'PRODUCTION') {
+        app.use(forceSsl);
+    }
+
+});
 
 
 app.use(cors());

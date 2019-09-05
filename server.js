@@ -24,18 +24,14 @@ const dmp = new DiffMatchPatch();
 
 var forceSsl = function (req, res, next) {
     if (req.headers['x-forwarded-proto'] !== 'https') {
-        return res.redirect(['https://', req.get('Host'), req.url].join(''));
+        return res.redirect(['https://', req.get('host'), req.url].join(''));
     }
     return next();
  };
 
- app.configure(function () {
-
-    if (mode === 'PRODUCTION') {
-        app.use(forceSsl);
-    }
-
-});
+if (mode === 'PRODUCTION') {
+    app.use(forceSsl);
+}
 
 
 app.use(cors());

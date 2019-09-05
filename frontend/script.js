@@ -362,6 +362,12 @@ window.onload = function()
 
         generateHTMLFromText();
 
+        if(e.keycode === 8)
+        {
+            sendChanges();
+            return;
+        }
+
         if(timeoutSend === null)
         {
             timeoutSend = setTimeout(sendChanges, 1000);

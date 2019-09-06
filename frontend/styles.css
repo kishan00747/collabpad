@@ -377,7 +377,7 @@ footer h4{
         height: 60px;
     }
 
-    #textbox{
+    #textbox, #text-overlay{
         font-size: 120%;
     }
 

@@ -373,9 +373,9 @@ window.onload = function()
 
     textbox.onkeyup = generateHTMLFromText;
 
-    textbox.oninput = renderDiv;
+    textbox.oninput = renderDivAndUpdate;
     
-    function renderDiv(e) {
+    function renderDivAndUpdate(e) {
 
         generateHTMLFromText();
 
@@ -387,16 +387,14 @@ window.onload = function()
 
         if(timeoutSend === null)
         {
-            timeoutSend = setTimeout(sendChanges, 1000);
-        }
-        else
-        {
-            clearTimeout(timeoutSend);
-            timeoutSend = setTimeout(sendChanges, 1000); 
-        }
-
-        
+            timeoutSend = setTimeout(updateChanges, 1000);
+        }    
     };
+
+    function updateChanges() {
+        sendChanges();
+        timeoutSend = null;
+    }
 
     textbox.onscroll = function(e) {
         textOverlay.scrollHeight = this.scrollHeight;
@@ -621,9 +619,6 @@ window.onload = function()
             ws.send(JSON.stringify(msg));
             console.log("sending changes");
         }
-
-        setTimeout(sendChanges, 1000);
-
     };
 
 

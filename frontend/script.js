@@ -281,7 +281,10 @@ window.onload = function()
 
     function patchTextboxFromPatches(patches) {
         console.log(patches);
-        textbox.disabled = true;
+        
+        if(patches && (patches.length !== 0) )
+        { 
+            textbox.disabled = true;
 
         const result = dmp.patch_apply(patches, textbox.value);
         let offset;
@@ -290,8 +293,6 @@ window.onload = function()
         lastUpdatedCopy = result[0];
         textbox.value = result[0];
         
-        if(patches && (patches.length !== 0) )
-        { 
             offset = getCaretOffset(patches, caretPosition);
 
             textbox.selectionStart = caretPosition + offset;

@@ -380,15 +380,6 @@ footer h4{
     #textbox, #text-overlay{
         font-size: 120%;
     }
-
-    @supports (-webkit-overflow-scrolling: touch) 
-    {
-      /* CSS specific to iOS devices */ 
-      #textbox, #text-overlay{
-        font-size: 120%;
-        cursor: pointer;
-      }
-    }
     
 
     #text-panel{
@@ -402,6 +393,14 @@ footer h4{
 
 
 }
+
+@supports (-webkit-overflow-scrolling: touch) 
+    {
+      /* CSS specific to iOS devices */ 
+      #textbox, #text-overlay{
+        cursor: pointer;
+      }
+    }
 
 
 /* Keyframes */

@@ -17,7 +17,7 @@ function onBtnSubmitClick(ev) {
     }
 
 
-    fetch('http://' + host + '/notes/authenticate/', {
+    fetch('https://' + host + '/notes/authenticate/', {
         method: 'POST',
         body: JSON.stringify(data),
         headers:{
@@ -35,12 +35,12 @@ function onBtnSubmitClick(ev) {
         else
         {
             console.log('h');
-            window.location.replace('http://' + host + '/' + data.redirect);
+            window.location.replace('https://' + host + '/' + data.redirect);
         }
     });
 }
 
 function onBtnBackClick(ev) {
-    window.location.assign("http://" + host);
+    window.location.assign("https://" + host);
 }
 

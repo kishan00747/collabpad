@@ -9,11 +9,12 @@ const redisServer = {
 }
 
 const msgCode = {
-    
-   NEW_PATCH : 1,
+   PING: 0, 
+   NEW_PATCH: 1,
    SEQ_NUM: 2,
    COLLAB_REM: 3,
-   ASS_USERNAME: 4 
+   ASS_USERNAME: 4,
+   NEW_UPDATE: 5 
 
 }
 

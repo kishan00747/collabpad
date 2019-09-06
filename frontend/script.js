@@ -14,6 +14,7 @@ window.onload = function()
     var btnSubmitPass = document.getElementById("btn_submit_pass");
     var modalPassBtnCancel = document.getElementById("btn_cancel_pass");
     var modalUsersBtnCancel = document.getElementById("btn_cancel_users");
+    var intervalKeepAlive = null;
     var patchList = [];
 
     var dmp = new diff_match_patch();
@@ -113,7 +114,7 @@ window.onload = function()
             password: inputPass.value
         }
         
-        fetch('https://' + host + '/notes/password/', {
+        fetch('http://' + host + '/notes/password/', {
             method: 'POST',
             body: JSON.stringify(data), 
             headers:{
@@ -145,12 +146,22 @@ window.onload = function()
 
 
     function wsConnect() {
-        ws = new WebSocket('wss://' + host + '/' + id);
+        ws = new WebSocket('ws://' + host + '/' + id);
 
-        ws.onopen = function() {
+        ws.onopen = function(ev) {
             // console.log(textbox.value);
             fetchAndPatch(); 
             console.log('Socket opened');
+
+            if(intervalKeepAlive !== null)
+            {
+                clearInterval(intervalKeepAlive);
+            }
+
+            intervalKeepAlive = setInterval(function(){
+                ws.send( JSON.stringify({msgCode: 0}) );
+            })
+            
         };
 
         ws.onmessage = wsOnMessage;
@@ -161,7 +172,7 @@ window.onload = function()
                 wsConnect();
             }, 3000)
 
-            console.log("onclose", ws.readyState);
+            console.log("closing code", ev.code);
         };
 
         ws.onerror = function(err) {
@@ -190,7 +201,6 @@ window.onload = function()
         if( !(collabExists.length > 0) )
         {
             collabCursors.push(collabInfo);
-            console.log("Collablist", collabCursors);
         }
         else
         {
@@ -199,7 +209,7 @@ window.onload = function()
         }
 
  
-        patchTextboxFromPatches(patchMsg.patches,patchMsg.cp);
+        patchTextboxFromPatches(patchMsg.patches);
     }
 
     
@@ -234,7 +244,6 @@ window.onload = function()
                             break;
                         }
                     }
-                    console.log("Removed collab", collabCursors);
                     break;
                 }
             case 4: // On connection to server, assigned username.
@@ -277,6 +286,7 @@ window.onload = function()
         const result = dmp.patch_apply(patches, textbox.value);
         let offset;
         const caretPosition = textbox.selectionEnd;
+
         lastUpdatedCopy = result[0];
         textbox.value = result[0];
         
@@ -313,7 +323,7 @@ window.onload = function()
 
     function fetchNote() {
         
-        return fetch('https://' + host + '/notes/' + id)
+        return fetch('http://' + host + '/notes/' + id)
         .then(response => response.json())
         .then(data => {
             return data.value;
@@ -356,9 +366,15 @@ window.onload = function()
 
     textbox.onclick = generateHTMLFromText;
 
+    textbox.onfocus = generateHTMLFromText;
+
     textbox.onpaste = generateHTMLFromText;
 
-    textbox.onkeyup = function(e) {
+    textbox.onkeyup = renderDiv;
+
+    textbox.oninput = renderDiv;
+    
+    function renderDiv(e) {
 
         generateHTMLFromText();
 
@@ -598,11 +614,14 @@ window.onload = function()
             var seq = seqNo++;
             var text = textbox.value;
             var cursorPos = textbox.selectionEnd;
+            var msgCode = 5;
             sentTextList[seq] = text; 
-            var msg = {id, seq, text, cursorPos}
+            var msg = {msgCode, id, seq, text, cursorPos}
             ws.send(JSON.stringify(msg));
             console.log("sending changes");
         }
+
+        setTimeout(sendChanges, 1000);
 
     };
 

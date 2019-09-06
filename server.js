@@ -43,14 +43,7 @@ app.use(session({
   cookie: {
       maxAge: 3600000
   }
-}))
-
-// app.use(function(req, res, next) {
-//     if(!req.secure) {
-//       return res.redirect(['https://', req.hostname, req.url].join(''));
-//     }
-//     next();
-//   });
+}));
 
 app.use(bodyParser.json());
 app.use(morgan('combined', {stream: accessLogStream}));
@@ -77,10 +70,43 @@ app.ws('/:id', (ws, req) => {
         clients[id].push(ws);
     }
 
-    ws.on('message', async (msg) => {
-        const response = JSON.parse(msg);
+    ws.on('message', (msg) => {
+
+        try
+        {
+            const response = JSON.parse(msg);
         
-        const note = await redis.getNoteFromRedis(response.id);
+            switch(response.msgCode)
+            {
+                case msgCode.PING:
+                    {
+
+                    }
+                    break;
+
+                case msgCode.NEW_UPDATE:
+                    {
+                        handleNewUpdate(ws, response);
+                    }
+                    break;
+
+                default:
+                    {
+
+                    }
+            }
+        }
+        catch(e)
+        {
+            console.log(e);
+        }
+        
+    });
+});
+
+handleNewUpdate = async (ws, response) => 
+{
+    const note = await redis.getNoteFromRedis(response.id);
         const patches = dmp.patch_make(note.value, response.text);
         
         await redis.setNoteInRedis(response.id, dmp.patch_apply(patches, note.value)[0]);
@@ -119,9 +145,7 @@ app.ws('/:id', (ws, req) => {
             
         });
         
-    })
-    
-});
+}
 
 
 notifySocketDown = (broadCastList, closedSocket) =>

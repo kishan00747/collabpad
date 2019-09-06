@@ -153,14 +153,9 @@ window.onload = function()
             fetchAndPatch(); 
             console.log('Socket opened');
 
-            if(intervalKeepAlive !== null)
-            {
-                clearInterval(intervalKeepAlive);
-            }
-
             intervalKeepAlive = setInterval(function(){
                 ws.send( JSON.stringify({msgCode: 0}) );
-            })
+            }, 20000)
             
         };
 
@@ -171,6 +166,12 @@ window.onload = function()
             setTimeout(function(){
                 wsConnect();
             }, 3000)
+
+            
+            if(intervalKeepAlive !== null)
+            {
+                clearInterval(intervalKeepAlive);
+            }
 
             console.log("closing code", ev.code);
         };
@@ -371,7 +372,7 @@ window.onload = function()
 
     textbox.onpaste = generateHTMLFromText;
 
-    textbox.onkeyup = renderDiv;
+    textbox.onkeyup = generateHTMLFromText;
 
     textbox.oninput = renderDiv;
     
@@ -579,7 +580,7 @@ window.onload = function()
 
         })
         
-        console.log("Collabs carets", collabs);
+        // console.log("Collabs carets", collabs);
     }
 
     function getLineText(text, start)

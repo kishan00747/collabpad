@@ -379,6 +379,7 @@ footer h4{
 
     #textbox, #text-overlay{
         font-size: 120%;
+        cursor: pointer;
     }
     
 

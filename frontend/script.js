@@ -114,7 +114,7 @@ window.onload = function()
             password: inputPass.value
         }
         
-        fetch('https://' + host + '/notes/password/', {
+        fetch('http://' + host + '/notes/password/', {
             method: 'POST',
             body: JSON.stringify(data), 
             headers:{
@@ -146,7 +146,7 @@ window.onload = function()
 
 
     function wsConnect() {
-        ws = new WebSocket('wss://' + host + '/' + id);
+        ws = new WebSocket('ws://' + host + '/' + id);
 
         ws.onopen = function(ev) {
             // console.log(textbox.value);
@@ -325,7 +325,7 @@ window.onload = function()
 
     function fetchNote() {
         
-        return fetch('https://' + host + '/notes/' + id)
+        return fetch('http://' + host + '/notes/' + id)
         .then(response => response.json())
         .then(data => {
             return data.value;
@@ -374,8 +374,10 @@ window.onload = function()
 
     textbox.onkeyup = generateHTMLFromText;
 
+    if( navigator.userAgent.toLowerCase().indexOf('firefox') > -1 ){
     textbox.onmousemove = setSelection;
-
+    }
+    
     textbox.oninput = renderDivAndUpdate;
     
     function renderDivAndUpdate(e) {
@@ -466,6 +468,7 @@ window.onload = function()
 
     function setSelection()
     {
+        console.log(textbox.selectionEnd);
         if(textbox.selectionStart === textbox.selectionEnd)
         {
             return;
@@ -484,8 +487,9 @@ window.onload = function()
         range.setStart(selStartInfo[0], selStartInfo[1]);
         range.setEnd(selEndInfo[0], selEndInfo[1]);
 
-        sel.removeAllRanges()
+        sel.removeAllRanges();
         sel.addRange(range);
+        console.log(sel);
 
         textbox.focus();
         

@@ -374,7 +374,7 @@ window.onload = function()
 
     textbox.onkeyup = generateHTMLFromText;
 
-    textbox.onmousemove = generateHTMLFromText;
+    textbox.onmousemove = setSelection;
 
     textbox.oninput = renderDivAndUpdate;
     

@@ -3,7 +3,7 @@ const Redis = require('redis');
 const redisServer = require('./constants').redisServer;
 global.Promise = require('bluebird');
 const HNOTES = "notes";
-const HPASS = "passwords"
+const HCOUNT = "count"
 
 Promise.promisifyAll(Redis.RedisClient.prototype);
 Promise.promisifyAll(Redis.Multi.prototype);
@@ -59,20 +59,41 @@ const getNoteFromRedis = (key) => {
         })
 }
 
-const setPassInRedis = (key, value) => {
+const delNoteInRedis = (key) => {
 
-    return redisClient.hsetAsync(HPASS, key, value)
-        .then((rep) => {
-            const msg = {reply: rep}
+    const msg = {reply: null};
+
+    return redisClient.hdelAsync(HNOTES, key)
+        .then( (reply) => {
+            const msg = {reply}
             return msg;
         })
+        .catch( e => {
+            return msg;
+        });
+
 }
 
-const getPassFromRedis = (key) => {
+
+const setCountInRedis = (key) => {
 
     const msg = {value: null};
 
-    return redisClient.hgetAsync(HPASS, key)
+
+    return redisClient.hsetAsync(HCOUNT, key, 0)
+        .then( (value) => {
+            return {value};
+        })
+        .catch( e => {
+            return msg;
+        });
+}
+
+const getCountFromRedis = (key) => {
+
+    const msg = {value: null};
+
+    return redisClient.hgetAsync(HCOUNT, key)
         .then( (reply) => {
             const msg = {value: reply}
             return msg;
@@ -83,11 +104,99 @@ const getPassFromRedis = (key) => {
         })
 }
 
+const delCountInRedis = (key) => {
+
+    const msg = {reply: null};
+
+    return redisClient.hdelAsync(HCOUNT, key)
+        .then( (reply) => {
+            const msg = {reply}
+            return msg;
+        })
+        .catch( e => {
+            return msg;
+        })
+
+}
+
+
+const incrCountInRedis = (key) => {
+
+    const msg = {value: null};
+    
+    return redisClient.hincrbyAsync(HCOUNT, key, 1)
+        .then( (value) => {
+            return {value};
+        })
+        .catch( e => {
+            return msg;
+        });
+
+}
+
+const decrCountInRedis = (key) => {
+
+    const msg = {value: null};
+    
+    return redisClient.hincrbyAsync(HCOUNT, key, -1)
+        .then( (value) => {
+            return {value};
+        })
+        .catch( e => {
+            return msg;
+        });
+
+}
+
+
+
+// const setPassInRedis = (key, value) => {
+
+//     return redisClient.hsetAsync(HPASS, key, value)
+//         .then((rep) => {
+//             const msg = {reply: rep}
+//             return msg;
+//         })
+// }
+
+// const getPassFromRedis = (key) => {
+
+//     const msg = {value: null};
+
+//     return redisClient.hgetAsync(HPASS, key)
+//         .then( (reply) => {
+//             const msg = {value: reply}
+//             return msg;
+//             }
+//         )
+//         .catch(e => {
+//             return msg;
+//         })
+// }
+
+// const delPassInRedis = (key) => {
+
+//     const msg = {reply: null};
+
+//     return redisClient.hdelAsync(HPASS, key)
+//         .then( (reply) => {
+//             const msg = {reply}
+//             return msg;
+//         })
+//         .catch( e => {
+//             return msg;
+//         })
+
+// }
+
 
 module.exports = {
-    redisClient,
     setNoteInRedis,
     getNoteFromRedis,
-    setPassInRedis,
-    getPassFromRedis
+    getCountFromRedis,
+    delNoteInRedis,
+    setCountInRedis,
+    delCountInRedis,
+    incrCountInRedis,
+    decrCountInRedis
 }

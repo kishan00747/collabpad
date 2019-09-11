@@ -3,6 +3,7 @@ const express = require('express');
 const msgCode = require('./constants').msgCode;
 const port = process.env.PORT || 3002;
 const redis = require('./redis.config');
+const mongo = require('./mongo.config');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
@@ -50,17 +51,21 @@ app.use(morgan('combined', {stream: accessLogStream}));
 
 let clients = {};
 
-app.ws('/:id', (ws, req) => {
+app.ws('/:id', asyncMiddleware( async (ws, req)  => {
 
     const id = req.params.id;
 
+    
     ws['clname'] = nodeRandomName();
+    ws['noteId'] = id;
     ws.send(JSON.stringify(
         {
             msgCode: msgCode.ASS_USERNAME,
             clname: ws['clname']
         }
     ));
+
+    await incrementAndLoadNoteToRedis(id);
 
     if (!clients[id]) 
     {     
@@ -69,6 +74,8 @@ app.ws('/:id', (ws, req) => {
     {
         clients[id].push(ws);
     }
+
+
 
     ws.on('message', (msg) => {
 
@@ -102,7 +109,34 @@ app.ws('/:id', (ws, req) => {
         }
         
     });
-});
+
+    ws.on('close', (msg) => {
+        notifySocketDown(clients[id], ws);
+        persistNoteInMongo(id);
+    })
+
+
+}));
+
+
+incrementAndLoadNoteToRedis = async (id) => {
+    
+    let count = await redis.incrCountInRedis(id);
+    count = count.value;
+
+    if(count == 1)
+    {
+        return loadNoteInRedis(id);
+    }
+    else
+    {
+        return 0;
+    }
+
+}
+
+
+
 
 handleNewUpdate = async (ws, response) => 
 {
@@ -135,7 +169,6 @@ handleNewUpdate = async (ws, response) =>
                 if(wsc.readyState !== 1)
                 {
                     broadcastList.splice(i, 1);
-                    notifySocketDown(broadcastList, wsc);
                 }
                 else
                 {
@@ -145,6 +178,18 @@ handleNewUpdate = async (ws, response) =>
             
         });
         
+}
+
+persistNoteInMongo = async (id) => {
+    const count = await redis.decrCountInRedis(id);
+    if(count.value === 0)
+    {
+        const note = await redis.getNoteFromRedis(id);
+        if(await mongo.updateNote(id, note.value))
+        {
+            await redis.delNoteInRedis(id);
+        }
+    }
 }
 
 
@@ -167,12 +212,42 @@ notifySocketDown = (broadCastList, closedSocket) =>
 app.get('/', asyncMiddleware( async (req, res, next) => {
 
     const unid = await uniqid();
-    await redis.setNoteInRedis(unid, "");
-    await redis.setPassInRedis(unid, "");
-
+    await mongo.createNote(unid, "");
+    await loadNoteInRedis(unid);
+    
     res.redirect("/" + unid);
      
 }));
+
+loadNoteInRedis = (key) => {
+    const notePromise = new Promise( async (resolve, reject) => {
+        try
+        {
+            const note = await mongo.getNote(key);
+            await redis.setNoteInRedis(key, note.value);
+            resolve();
+        }
+        catch
+        {
+            reject();
+        }
+    });
+
+    return notePromise;
+}
+
+isNoteInRedis = async (key) => {
+    const count = await redis.getCountFromRedis(id);
+
+    if(count === null)
+    {
+        return false;
+    }
+
+    return (count.value !== 0);
+
+}
+
 
 app.use(express.static(path.join(__dirname + "/frontend/")));
 
@@ -183,13 +258,13 @@ app.post('/notes/password/', asyncMiddleware( async( req, res, next) => {
 
     if(pass !== undefined && id !== undefined)
     {
-        const note = await redis.getNoteFromRedis(id);
+        const note = await mongo.getNote(id);
 
-        if(note.value !== null)
+        if(note !== null)
         {
             const hashPass = await bcrypt.hash(pass, saltRounds);
-            const result = await redis.setPassInRedis(id, hashPass); 
-            res.status(200).json(result);    
+            const result = await mongo.updatePass(id, hashPass); 
+            res.status(200).json({reply: result}); 
         }
         else
         {
@@ -214,8 +289,12 @@ app.post('/notes/authenticate/', asyncMiddleware( async( req, res, next) => {
     {
         try
         {
-            const redisRes = await redis.getPassFromRedis(id);
-            const hashPass = redisRes.value;
+            const noteObj = await mongo.getNote(id);
+            if(noteObj === null)
+            {
+                return res.status(400).json({reply: false});
+            }
+            const hashPass = noteObj.pass;
             const match = await bcrypt.compare(pass, hashPass);
             const response = {reply: match};
             
@@ -255,18 +334,17 @@ app.post('/notes/authenticate/', asyncMiddleware( async( req, res, next) => {
 app.get('/:id', async (req, res, next) => {  
 
     const id = req.params.id;
-    const note = await redis.getNoteFromRedis(id);
-    if(note.value === null)
+    const note = await mongo.getNote(id);
+
+    if(note === null)
     {
-        await redis.setNoteInRedis(id, "");
-        await redis.setPassInRedis(id, "");
+        await mongo.createNote(unid, "");
+        await loadNoteInRedis(unid);
         res.sendFile(path.join(__dirname + "/frontend/index.html"));
     }
     else
     {
-
-        const reply = await redis.getPassFromRedis(id);
-        const pass = reply.value;
+        const pass = note.pass;
         if(pass === "" || pass === await bcrypt.hash("", saltRounds))
         {
             res.sendFile(path.join(__dirname + "/frontend/index.html"));
@@ -277,8 +355,7 @@ app.get('/:id', async (req, res, next) => {
             
             if(sess.urls !== undefined && sess.urls[id] !== undefined)
             {
-                const redisPass = await redis.getPassFromRedis(id);
-                if(sess.urls[id] === redisPass.value)
+                if(sess.urls[id] === pass)
                 {
                     res.sendFile(path.join(__dirname + "/frontend/index.html"));
                 }
@@ -292,7 +369,6 @@ app.get('/:id', async (req, res, next) => {
                 res.sendFile(path.join(__dirname + "/frontend/index_protected.html"));
             }
             
-
         }
     }
 
@@ -302,15 +378,35 @@ app.get('/:id', async (req, res, next) => {
 app.get('/notes/:key', asyncMiddleware( async (req, res, next) => {
 
     const key = req.params.key;
-    const msg = await redis.getNoteFromRedis(key);
+    const msg = await redis.getCountFromRedis(key);
+    let note;
 
-    if(msg.value === null)
+    if(msg.value == 0)
+    {
+        note = await mongo.getNote(key);
+    }
+    else
+    {
+        note = await redis.getNoteFromRedis(key);
+
+        if(note.value === null)
+        {
+            note = await mongo.getNote(key);
+        }
+        else
+        {
+            note = note.value;
+        }
+
+    }
+
+    if(note === null)
     {    
         res.status(404).send("Failed");
     }
     else
     {
-        res.status(200).json(msg);
+        res.status(200).json({value: note});
     }
     
 }));
